@@ -1,0 +1,50 @@
+---
+title: "Zločin i kazna - analiza kriminala"
+author: Luka Mucko, Filip Pankretić, Matej Lopotar, Tomislav Žiger
+output: html_document
+---
+<br>
+Prvo ćemo odgovoriti na zadana pitanja, zatim ispitivati vlastite hipoteze.
+"Invokacija"
+```{r}
+recidivism_full=read.csv("recidivism_full.csv")
+```
+## Postoji li razlika u duljini zatvorske kazne s obzirom na razinu obrazovanja?
+
+U tablici podataka imamo stupce "prison_years" i "education_level" <br>
+"prison_years" poprima vrijednosti:
+```{r}
+for (v in unique(recidivism_full$Prison_Years)){
+  print(v)
+}
+```
+Imamo 4 klase duljine zatvorske kazne. <br>
+
+"education_level" poprima vrijednosti:
+```{r}
+for (v in unique(recidivism_full$Education_Level)){
+  print(v)
+}
+```
+Vidimo da imamo 3 klase razine obrazovanja. <br><br>
+
+Uz poznavanje jedinstvenih vrijednosti "education_level" i "prison_years" možemo pronaći kontingencijsku tablicu:
+```{r}
+contingency_table<-table(recidivism_full$Education_Level, recidivism_full$Prison_Years)
+print(contingency_table)
+```
+Znajući kontingencijsku tablicu postavljamo hipoteze $H_0$ i $H_1$ <br>
+
+$H_0:$ Proporcije zatvorenih za neku klasu iz "education_level" naspram ukupnog broja zatvorenih u nekoj klasi iz "prison_years" je jednak za svaku klasu iz "prison_years".  Drugim riječima:<br> <br>
+Neka je $A = \text{"kontingencijska tablica"}$ i numerirajmo retke i stupce tablice A brojevima i={1,2,3} odnosno j={1,2,3,4}. <br>
+Neka je $P_{ij} = \frac{A_{ij}}{\sum_{i=1}^{3} A_{ij}}$ (vidi ispis koda 5.)<br>
+$H_0: p_{ij}=p_{ik} \  \forall i \in \{1,2,3\},\  \forall j,k \in \{1,2,3,4\}\  j \neq k$ <br>
+$H_1: p_{ij}\neq p_{ik}\  ...$ <br>
+Možemo testirati hipotezu $H_0\  \text{odnosno} \ H_1$ koristeći $\chi ^2$ test o jednakosti proporcija.
+```{r}
+chisq.test(contingency_table)
+```
+Vidimo da je vrijednost testne statistike 223.12 i p-vrijednost $< 2.2 \times 10^{16}$ što je značajno
+manje od $p << \alpha = 0.05$. <br>
+Dakle zaključujemo da **Postoji razlika u duljini zatvorske kazne s obzirom na razinu obrazovanja!!**
+
