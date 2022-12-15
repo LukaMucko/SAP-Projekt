@@ -5,7 +5,8 @@ output: html_document
 ---
 <br>
 Prvo ćemo odgovoriti na zadana pitanja, zatim ispitivati vlastite hipoteze.
-"Invokacija"
+"Invokacija":
+
 ```{r}
 recidivism_full=read.csv("recidivism_full.csv")
 ```
