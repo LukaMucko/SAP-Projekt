@@ -174,3 +174,32 @@ chisq<-chisq.test(recidivism_full$Prior_Conviction_Episodes_Prop,recidivism_full
 corrplot(chisq$residuals, is.corr = FALSE)
 ```
 <br> Zatvorenici koji nerijetko konzumiraju kokain su prije osude počinili nekoliko zločina vezanih uz nekretnine. <br>
+
+
+
+
+## Jesu li mladi osuđenici skloniji drogama?
+
+U tablici podataka koristeći postotak pozitivnih testova na različite droge možemo ispitati koja skupina zatvorenika je barem jednom koristila drogu u zatvoru. 
+
+
+
+```{r}
+mladi_droge <-  nrow(subset(recidivism_full, (DrugTests_THC_Positive!=0 | DrugTests_Meth_Positive!=0 | DrugTests_Cocaine_Positive!=0 | DrugTests_Cocaine_Positive!=0) & Age_at_Release %in% c("18-22","23-27","28-32")))
+
+stari_droge <- nrow(subset(recidivism_full, (DrugTests_THC_Positive!=0 | DrugTests_Meth_Positive!=0 | DrugTests_Cocaine_Positive!=0 | DrugTests_Cocaine_Positive!=0) & Age_at_Release %in% c("33-37","38-42","43-47","48 or older")))
+
+cat("Broj mladih/starih koji su skloni drogama:",mladi_droge,stari_droge)
+
+
+```
+Vidimo da veći broj mlađih zatvorenika koristi drogu iako ih je manje od starijih u tablici
+```{r}
+Dm <- mladi_droge/mladi
+Ds <- stari_droge/stari
+rez <- prop.test(c(4670,3612),c(12224,13611), alternative="greater")
+rez
+rez$p.value
+```
+
+Dobivamo p-vrijednost $1.069374 \times 10^{-89}$ što je manje od nivoa značajnosti $\alpha = 0.05$. **Stoga odbacujemo nultu hipotezu u korist alternative i statistički zaključujemo uz značaj 0.05 da su mlađi zatvorenici skloniji drogama**
