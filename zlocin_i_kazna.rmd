@@ -19,6 +19,7 @@ recidivism_full <- read.csv("recidivism_full.csv")
 ```{r include = FALSE}
 library("plyr")
 library("foreach")
+library(corrplot)
 ```
 # Postoji li razlika u duljini zatvorske kazne s obzirom na razinu obrazovanja?
 
@@ -53,8 +54,15 @@ $H_0: p_{ij}=p_{ik} \  \forall i \in \{1,2,3\},\  \forall j,k \in \{1,2,3,4\}\  
 $H_1: p_{ij}\neq p_{ik}\  ...$ <br>
 Možemo testirati hipotezu $H_0\  \text{odnosno} \ H_1$ koristeći $\chi ^2$ test o jednakosti proporcija.
 ```{r}
-chisq.test(contingency_table)
+chisq <- chisq.test(contingency_table)
 ```
+Prikažimo reziduale pomoću "corrplot" paketa:
+```{r}
+corrplot(chisq$residuals, is.cor = FALSE)
+
+```
+<br>
+Plava boja predstavlja asocijaciju tj. povezanost između retka i stupca. Uočimo da postoji pozitivna asocijacija ljudi sa završenim fakultetom i više od 3 godine kazne. Također postoji negativna asocijacija s ljudima sa završenim fakultetom i kaznom od 1-2 godine. <br>
 Vidimo da je vrijednost testne statistike 223.12 i p-vrijednost $< 2.2 \times 10^{-16}$ što je značajno
 manje od $p << \alpha = 0.05$. <br>
 Dakle zaključujemo da **postoji razlika u duljini zatvorske kazne s obzirom na razinu obrazovanja!!**
@@ -78,24 +86,91 @@ sprintf("Broj mladih je: %s",mladi)
 sprintf("Broj starijih je: %s",stari)
 ```
 Za mjeru ponovljenog kriminala koristit ćemo Recidivizam. <br>
-Postoje 3 stupca u tablici koji nam govore je li je zatvorenik počinio zločin nako puštanja na slobodu. To su: Recidivism_Within_3years, Recidivism_Arrest_Year1, Recidivism_Arrest_Year2, Recidivism_Arrest_Year3. 0=no/1=yes<br>
+Postoje 1 stupac u tablici koji nam govori je li je zatvorenik počinio zločin 3 godina nakon puštanja na slobodu i 3 stupca koja predstavljaju je li je uhićen u nekoj od te 3 godine. To su sve: Recidivism_Within_3years, Recidivism_Arrest_Year1, Recidivism_Arrest_Year2, Recidivism_Arrest_Year3. 0=no/1=yes<br>
 Stoga možemo prebrojati sve one koji su ponovno počinili zločin.
 ```{r}
-ponovljeni_mladi <- nrow(subset(recidivism_full, Age_at_Release %in% c("18-22","23-27","28-32")  & (Recidivism_Within_3years | Recidivism_Arrest_Year1 | Recidivism_Arrest_Year2 | Recidivism_Arrest_Year3)))
-ponovljeni_stari <- nrow(subset(recidivism_full, Age_at_Release %in% c("33-37","38-42","43-47","48 or older")  & (Recidivism_Within_3years | Recidivism_Arrest_Year1 | Recidivism_Arrest_Year2 | Recidivism_Arrest_Year3)))
+ponovljeni_mladi <- nrow(subset(recidivism_full,
+                                Age_at_Release %in% c("18-22","23-27","28-32")
+                                        & Recidivism_Within_3years))
+ponovljeni_stari <- nrow(subset(recidivism_full,
+                                Age_at_Release %in% c("33-37","38-42","43-47","48 or older") & Recidivism_Within_3years))
 cat("Broj mladih/starih koji su ponovili zločin:",ponovljeni_mladi,ponovljeni_stari)
 
 ```
-Poznavajuči brojeve možemo odrediti $p_s$ i $p_m$
+Poznavajuči brojeve možemo odrediti $p_s$ i $p_m$ i provesti test:
 ```{r}
 Pm <- ponovljeni_mladi/mladi
 Ps <- ponovljeni_stari/stari
-```
-Provedimo test:
-```{r}
-rez <- prop.test(c(ponovljeni_mladi,ponovljeni_stari),c(mladi,stari), alternative="greater")
+rez <- prop.test(c(7987,6917),c(12224,13611), alternative="greater")
 rez
 rez$p.value
 ```
 Dobivamo p-vrijednost $3.7478 \times 10^{-123}$ što je puno manje od nivoa značajnosti $\alpha = 0.05$. **Stoga odbacujemo nultu hipotezu u korist alternative i statistički zaključujemo uz značaj 0.05 da zatvorenici pušteni u svojoj "mladosti" skloniji ponavljanju kriminala.**
 
+## Postoji li veza između korištene vrste narkotika i vrste zločina
+U tablici podataka je zabilježeno 8 različitih zločina prije osude (Felony, Misdemeanor, Violent, Property, Drug, PPViolationCharges, DomesticViolenceCharges, GunCharges) i korištenje 4 narkotika (THC, Cocaine, Meth i ostali) nakon puštanja iz zatvora, podatke o korištenju prije nemamo.
+Budući da su oznake zločina kategorijske (0, 1, 2 or more) koristit ćemo Pearsonov test korelacije ili $\chi^{2}$ test korelacije za odabrane parove zločina i korištenog narkotika. <br>
+Korištenje narkotika se predstavlja u postotku pozitivnih testova 0-1. Te vrijednosti ćemo grupirati u 3 grupe. "Rijetko" ako je postotak <0.33, "Često" ako je postotak $\geq$ 0.33 i <0.66, te "Vrlo Često" ako je postotak $\geq$ 0.66. <br>
+Za svaki kombinaciju zločina i korištenog narkotika formiramo hipoteze: <br>
+$H_0$: Broj počinjenog kriminala je nezavisan postotku pozitivnih testova na neki narkotik. <br>
+$H_1$: Ti brojevi nisu nezavisni. <br>
+Pretvorimo kontinuirane podatke iz DrugTests u kategorijske:
+```{r}
+recidivism_full$CocaineUsage <- cut(recidivism_full$DrugTests_Cocaine_Positive,
+                                    breaks=c(0,0.33,0.66,1),
+                                    labels =c("Rijetko","Često","Vrlo Često"))
+recidivism_full$MethUsage <- cut(recidivism_full$DrugTests_Meth_Positive,
+                                 breaks =c(0,0.33,0.66,1),
+                                 labels=c("Rijetko","Često","Vrlo Često"))
+recidivism_full$THCUsage <- cut(recidivism_full$DrugTests_THC_Positive,
+                                    breaks=c(0,0.33,0.66,1),
+                                    labels=c("Rijetko","Često","Vrlo Često"))
+recidivism_full$OtherUsage <- cut(recidivism_full$DrugTests_Other_Positive,
+                                    breaks=c(0,0.33,0.66,1),
+                                    labels=c("Rijetko","Često","Vrlo Često"))
+```
+Sada možemo provesti ukupno 4*8= 32 testa. <br>
+```{r}
+narkotici<- c("MethUsage","CocaineUsage","THCUsage","OtherUsage")
+zlocin <- c("Prior_Conviction_Episodes_GunCharges",
+                                        "Prior_Conviction_Episodes_Drug",
+                                        "Prior_Conviction_Episodes_Viol",
+                                        "Prior_Conviction_Episodes_Felony",
+                                        "Prior_Conviction_Episodes_PPViolationCharges",
+                                        "Prior_Conviction_Episodes_Misd",
+                                        "Prior_Conviction_Episodes_DomesticViolenceCharges",
+                                        "Prior_Conviction_Episodes_Prop")
+chisq_tests <- data.frame(matrix(ncol=4, nrow=8),
+                          row.names = zlocin)
+colnames(chisq_tests)<- narkotici
+
+for (narcotic in narkotici){
+  for (crime in zlocin) {
+    chisq <- chisq.test(table(recidivism_full[,narcotic],recidivism_full[, crime]),simulate.p.value = TRUE)
+    chisq_tests[crime,narcotic]<-chisq$p.value
+  }
+}
+```
+```{r}
+row.names(chisq_tests)<-c("GunCharges","Drug","Violent","Felony","PPViolationCharges","Misdemeanor","DomesticViolence","Property")
+chisq_tests
+```
+Tablica iznad sadrži p-vrijednosti Pearsonovog $\chi^{2}$ testa. Za One kombinacije za koje je p vrijednost manja od 0.05 odbacujemo i odbacujemo nultu hipotezu o nezavisnosti kriminala i korištenog narkotika.
+Uočimo par neočekivanih rezultata: <br>
+Zatvorenici koji često konzumiraju THC odnosno produkte marihuane su zatvoreni zbog nasilja. Dok oni koji rijetko konzumiraju nisu. <br>
+
+```{r}
+chisq<-chisq.test(recidivism_full$Prior_Conviction_Episodes_Viol,recidivism_full$THCUsage,simulate.p.value = TRUE)
+chisq
+chisq$expected
+chisq$observed
+corrplot(chisq$residuals, is.corr = FALSE)
+```
+<br> Plavo označava da više zatvorenika od očekivanog koji često konzumiraju THC zatvoreno zbog nasilja. <br>
+Pogledajmo kokain i "property":
+
+```{r}
+chisq<-chisq.test(recidivism_full$Prior_Conviction_Episodes_Prop,recidivism_full$CocaineUsage,simulate.p.value = TRUE)
+corrplot(chisq$residuals, is.corr = FALSE)
+```
+<br> Zatvorenici koji nerijetko konzumiraju kokain su prije osude počinili nekoliko zločina vezanih uz nekretnine. <br>
