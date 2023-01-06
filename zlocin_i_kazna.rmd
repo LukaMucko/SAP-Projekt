@@ -17,9 +17,13 @@ Učitajmo podatke:
 recidivism_full <- read.csv("recidivism_full.csv")
 ```
 ```{r include = FALSE}
+library("dplyr")
 library("plyr")
 library("foreach")
-library(corrplot)
+library("corrplot")
+library("scales")
+
+
 ```
 # Postoji li razlika u duljini zatvorske kazne s obzirom na razinu obrazovanja?
 
@@ -55,6 +59,7 @@ $H_1: p_{ij}\neq p_{ik}\  ...$ <br>
 Možemo testirati hipotezu $H_0\  \text{odnosno} \ H_1$ koristeći $\chi ^2$ test o jednakosti proporcija.
 ```{r}
 chisq <- chisq.test(contingency_table)
+chisq
 ```
 Prikažimo reziduale pomoću "corrplot" paketa:
 ```{r}
@@ -101,7 +106,7 @@ Poznavajuči brojeve možemo odrediti $p_s$ i $p_m$ i provesti test:
 ```{r}
 Pm <- ponovljeni_mladi/mladi
 Ps <- ponovljeni_stari/stari
-rez <- prop.test(c(7987,6917),c(12224,13611), alternative="greater")
+rez <- prop.test(c(ponovljeni_mladi,ponovljeni_stari),c(mladi,stari), alternative="greater")
 rez
 rez$p.value
 ```
@@ -203,3 +208,62 @@ rez$p.value
 ```
 
 Dobivamo p-vrijednost $1.069374 \times 10^{-89}$ što je manje od nivoa značajnosti $\alpha = 0.05$. **Stoga odbacujemo nultu hipotezu u korist alternative i statistički zaključujemo uz značaj 0.05 da su mlađi zatvorenici skloniji drogama**
+```{r}
+stari_drogerasi <- recidivism_full %>%
+  select(DrugTests_THC_Positive, DrugTests_Meth_Positive, DrugTests_Cocaine_Positive, DrugTests_Other_Positive, Age_at_Release) %>%
+  filter((DrugTests_THC_Positive!=0 | DrugTests_Meth_Positive!=0 | DrugTests_Cocaine_Positive!=0 | DrugTests_Cocaine_Positive!=0) & Age_at_Release %in% c("33-37","38-42","43-47","48 or older") ) %>%
+  filter(rowSums(.[,1:4]) > 0) %>% na.omit()
+
+
+mladi_drogerasi <- recidivism_full %>%
+  select(DrugTests_THC_Positive, DrugTests_Meth_Positive, DrugTests_Cocaine_Positive, DrugTests_Other_Positive, Age_at_Release) %>%
+  filter((DrugTests_THC_Positive!=0 | DrugTests_Meth_Positive!=0 | DrugTests_Cocaine_Positive!=0 | DrugTests_Cocaine_Positive!=0) & Age_at_Release %in% c("18-22","23-27","28-32") ) %>%
+  filter(rowSums(.[,1:4]) > 0) %>% na.omit()
+
+
+stari_drogerasi <- stari_drogerasi %>%
+  mutate(total = rowSums(.[1:4])/4) %>%
+  select(-DrugTests_THC_Positive,-DrugTests_Meth_Positive,-DrugTests_Cocaine_Positive,-DrugTests_Other_Positive)
+
+mladi_drogerasi <- mladi_drogerasi %>%
+  mutate(total = rowSums(.[1:4])/4) %>%
+  select(-DrugTests_THC_Positive,-DrugTests_Meth_Positive,-DrugTests_Cocaine_Positive,-DrugTests_Other_Positive)
+
+```
+
+
+```{r}
+hist(mladi_drogerasi$total)
+hist(stari_drogerasi$total)
+```
+
+```{r}
+stari_drogerasi_sqrt <- stari_drogerasi %>%
+  mutate(total_sqrt = total^(1/3.5))
+
+mladi_drogerasi_sqrt <- mladi_drogerasi %>%
+        mutate(total_sqrt = total^(1/3.5))
+
+hist(stari_drogerasi_sqrt$total_sqrt)
+hist(mladi_drogerasi_sqrt$total_sqrt)
+```
+
+```{r}
+boxplot(stari_drogerasi_sqrt$total_sqrt, mladi_drogerasi_sqrt$total_sqrt )
+
+```
+
+```{r}
+qqnorm(mladi_drogerasi_sqrt$total_sqrt)
+qqline(mladi_drogerasi_sqrt$total_sqrt)
+```
+
+Pozivamo se na robusnost T-testa.
+```{r}
+var.test(mladi_drogerasi_sqrt$total_sqrt,stari_drogerasi_sqrt$total_sqrt)
+```
+
+```{r}
+t.test(mladi_drogerasi_sqrt$total_sqrt, stari_drogerasi_sqrt$total_sqrt, alternative = "greater", var.equal=FALSE)
+```
+
