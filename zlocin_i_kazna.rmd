@@ -22,8 +22,7 @@ library("plyr")
 library("foreach")
 library("corrplot")
 library("scales")
-
-
+library("caret")
 ```
 # Postoji li razlika u duljini zatvorske kazne s obzirom na razinu obrazovanja?
 
@@ -266,4 +265,64 @@ var.test(mladi_drogerasi_sqrt$total_sqrt,stari_drogerasi_sqrt$total_sqrt)
 ```{r}
 t.test(mladi_drogerasi_sqrt$total_sqrt, stari_drogerasi_sqrt$total_sqrt, alternative = "greater", var.equal=FALSE)
 ```
+```{r}
+train_test <- subset(recidivism_full, Training_Sample==1)
+test_sample <- subset(recidivism_full, Training_Sample!=1)
+```
+```{r}
+model <- glm(Recidivism_Within_3years ~ Gender + Race + Education_Level
+             , data = train_test, family="binomial")
+summary(model)
+```
+```{r}
+probabilities <- predict(model, newdata = test_sample, type="response")
+predicted.classes <- ifelse(probabilities > 0.5, TRUE, FALSE)
+accuracy <- mean(predicted.classes == test_sample$Recidivism_Within_3years)
+print(accuracy)
 
+```
+
+```{r}
+model <- glm(Recidivism_Within_3years ~ Violations_ElectronicMonitoring + Violations_Instruction + Violations_FailToReport + Violations_MoveWithoutPermission
+             , data = train_test, family="binomial")
+probabilities <- predict(model, newdata = test_sample, type="response")
+predicted.classes <- ifelse(probabilities > 0.5, TRUE, FALSE)
+accuracy <- mean(predicted.classes == test_sample$Recidivism_Within_3years)
+print(accuracy)
+```
+
+```{r}
+model <- glm(Recidivism_Within_3years ~ Condition_MH_SA + Condition_Cog_Ed + Condition_Other
+             , data = train_test, family="binomial")
+probabilities <- predict(model, newdata = test_sample, type="response")
+predicted.classes <- ifelse(probabilities > 0.5, TRUE, FALSE)
+accuracy <- mean(predicted.classes == test_sample$Recidivism_Within_3years)
+print(accuracy)
+
+```
+
+```{r}
+model <- glm(Recidivism_Within_3years ~ Education_Level + Dependents
+             , data = train_test, family="binomial")
+probabilities <- predict(model, newdata = test_sample, type="response")
+predicted.classes <- ifelse(probabilities > 0.5, TRUE, FALSE)
+accuracy <- mean(predicted.classes == test_sample$Recidivism_Within_3years)
+print(accuracy)
+```
+```{r}
+model <- glm(Recidivism_Within_3years ~ Prior_Arrest_Episodes_Violent + Prior_Arrest_Episodes_PPViolationCharges
+             , data = train_test, family="binomial")
+probabilities <- predict(model, newdata = test_sample, type="response")
+predicted.classes <- ifelse(probabilities > 0.5, TRUE, FALSE) %>% na.omit()
+accuracy <- mean(predicted.classes == test_sample$Recidivism_Within_3years)
+print(accuracy)
+
+```
+```{r}
+model <- glm(Recidivism_Within_3years ~ Gender + Race
+             , data = train_test, family="binomial")
+probabilities <- predict(model, newdata = test_sample, type="response")
+predicted.classes <- ifelse(probabilities > 0.5, TRUE, FALSE) %>% na.omit()
+accuracy <- mean(predicted.classes == test_sample$Recidivism_Within_3years)
+print(accuracy)
+```
