@@ -23,6 +23,8 @@ library("foreach")
 library("corrplot")
 library("scales")
 library("caret")
+require("nortest")
+
 ```
 # Postoji li razlika u duljini zatvorske kazne s obzirom na razinu obrazovanja?
 
@@ -257,6 +259,10 @@ qqnorm(mladi_drogerasi_sqrt$total_sqrt)
 qqline(mladi_drogerasi_sqrt$total_sqrt)
 ```
 
+```{r}
+lillie.test(stari_drogerasi_sqrt$total_sqrt)
+```
+
 Pozivamo se na robusnost T-testa.
 ```{r}
 var.test(mladi_drogerasi_sqrt$total_sqrt,stari_drogerasi_sqrt$total_sqrt)
@@ -326,3 +332,4 @@ predicted.classes <- ifelse(probabilities > 0.5, TRUE, FALSE) %>% na.omit()
 accuracy <- mean(predicted.classes == test_sample$Recidivism_Within_3years)
 print(accuracy)
 ```
+
