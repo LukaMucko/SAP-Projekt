@@ -24,7 +24,6 @@ library("corrplot")
 library("scales")
 library("caret")
 require("nortest")
-
 ```
 # Postoji li razlika u duljini zatvorske kazne s obzirom na razinu obrazovanja?
 
@@ -208,20 +207,35 @@ rez
 rez$p.value
 ```
 
-Dobivamo p-vrijednost $1.069374 \times 10^{-89}$ što je manje od nivoa značajnosti $\alpha = 0.05$. **Stoga odbacujemo nultu hipotezu u korist alternative i statistički zaključujemo uz značaj 0.05 da su mlađi zatvorenici skloniji drogama**
+Dobivamo p-vrijednost $1.069374 \times 10^{-89}$ što je manje od nivoa značajnosti $\alpha = 0.05$. **Stoga odbacujemo nultu hipotezu u korist alternative i statistički zaključujemo uz značaj 0.05 da su mlađi zatvorenici skloniji narkoticima**
+
+
+## Od onih koji konzumiraju narkotike, konzumiraju li obje dobne skupine u prosjeku istu količinu narkotika
+
+Provedimo jednostavan T-test za usporedbu očekivanih vrijednosti iz normalne distribucije sa različitim varijancama. <br>
+$H_0:$ $\mu_{\text{mladi}} = \mu_{\text{stari}}$ <br>
+$H_1:$ očekivane vrijednosti nisu iste. <br>
+$\mu$ označavaju očekivanu prosjeka rezultata iz testova droge, stupci DrugTests_Cocaine_Positive ...<br>
+<br>
+Izdvojimo stare i mlade "drogeraše". Oni koji ne konzumiraju narkotike definiramo tako da imaju svaki test na drogu = 0. <br>
+
 ```{r}
 stari_drogerasi <- recidivism_full %>%
   select(DrugTests_THC_Positive, DrugTests_Meth_Positive, DrugTests_Cocaine_Positive, DrugTests_Other_Positive, Age_at_Release) %>%
   filter((DrugTests_THC_Positive!=0 | DrugTests_Meth_Positive!=0 | DrugTests_Cocaine_Positive!=0 | DrugTests_Cocaine_Positive!=0) & Age_at_Release %in% c("33-37","38-42","43-47","48 or older") ) %>%
   filter(rowSums(.[,1:4]) > 0) %>% na.omit()
 
-
 mladi_drogerasi <- recidivism_full %>%
   select(DrugTests_THC_Positive, DrugTests_Meth_Positive, DrugTests_Cocaine_Positive, DrugTests_Other_Positive, Age_at_Release) %>%
   filter((DrugTests_THC_Positive!=0 | DrugTests_Meth_Positive!=0 | DrugTests_Cocaine_Positive!=0 | DrugTests_Cocaine_Positive!=0) & Age_at_Release %in% c("18-22","23-27","28-32") ) %>%
   filter(rowSums(.[,1:4]) > 0) %>% na.omit()
 
+summary(stari_drogerasi)
+summary(mladi_drogerasi)
+```
 
+Napravimo prosjek testova na narkotike i spremimo vrijednost u stupac total:
+```{r}
 stari_drogerasi <- stari_drogerasi %>%
   mutate(total = rowSums(.[1:4])/4) %>%
   select(-DrugTests_THC_Positive,-DrugTests_Meth_Positive,-DrugTests_Cocaine_Positive,-DrugTests_Other_Positive)
@@ -238,98 +252,207 @@ hist(mladi_drogerasi$total)
 hist(stari_drogerasi$total)
 ```
 
+Prema izgledu histograma, podaci ne nalikuju na normalnu distribuciju. Ali možda možemo naći nekakvu transformaciju nakon koje će podaci biti normalno distribuirani. <br>
+
+Pogledajmo transformaciju $f(x)=\log_{5} x$ <br>
 ```{r}
-stari_drogerasi_sqrt <- stari_drogerasi %>%
-  mutate(total_sqrt = total^(1/3.5))
+stari_drogerasi_trans <- stari_drogerasi %>%
+  mutate(total_trans = log(total, base=5))
 
-mladi_drogerasi_sqrt <- mladi_drogerasi %>%
-        mutate(total_sqrt = total^(1/3.5))
+mladi_drogerasi_trans <- mladi_drogerasi %>%
+        mutate(total_trans = log(total, base=5))
 
-hist(stari_drogerasi_sqrt$total_sqrt)
-hist(mladi_drogerasi_sqrt$total_sqrt)
+hist(mladi_drogerasi_trans$total_trans)
+hist(stari_drogerasi_trans$total_trans)
 ```
 
+Vidimo da distribucije donekle nalikuju na normalnu razdiobu<br>
+
+Uspoređujemo $\log_{5}\mu_{\text{mladi}} = \log_{5}\mu_{\text{stari}}$
 ```{r}
-boxplot(stari_drogerasi_sqrt$total_sqrt, mladi_drogerasi_sqrt$total_sqrt )
+boxplot(stari_drogerasi_trans$total_trans, mladi_drogerasi_trans$total_trans )
 
 ```
 
+Pogledajmo QQ-plot koji nam govori koliko smo "bliski" normalnoj razdiobi.
 ```{r}
-qqnorm(mladi_drogerasi_sqrt$total_sqrt)
-qqline(mladi_drogerasi_sqrt$total_sqrt)
+qqnorm(stari_drogerasi_trans$total_trans)
+qqline(stari_drogerasi_trans$total_trans)
 ```
+Vidimo da je distribucija "stari_drogerasi_trans" nije sasvim normalna, ali uz nisku razinu značajnosti ćemo uzeti da je.
+
 
 ```{r}
-lillie.test(stari_drogerasi_sqrt$total_sqrt)
+qqnorm(mladi_drogerasi_trans$total_trans)
+qqline(mladi_drogerasi_trans$total_trans)
+```
+<br> Ista stvar za distribuciju "mladi_drogerasi_trans". Zbog značanjih devijacija od pravca ne možemo reći da su podaci normalno distribuirani, ali ćemo uzeti da jesu zbog robusnosti T-testa. <br>
+
+Pogledajmo konkretne p-vrijednosti nekog statističkog testa normalnosti.
+```{r}
+shapiro.test(stari_drogerasi_trans$total_trans)
+```
+Shapiro-Wilkov test normalnosti daje p-vrijednost $1.733 \times 10^{-11}$. Uz značaj od 0.05 možemo statistički zaključiti da transformirani podaci nisu normalno distribuirani.
+
+Iako podaci nisu normalni osim što histogrami donekle nalikuju na normalnu distribucij, pozivamo se na robusnost T-testa i ipak ga provodimo uz pretpostavku da su podaci nezavisni i nad rezultatima t-testa ćemo donositi zaključke. <br>
+
+Prije provedbe t-testa moramo znati jesu li varijance jednake, budući da nisu poznate.<br>
+Stoga provodimo F-test s hipotezama: <br>
+$H_0$: $\sigma_{mladi}^{2} = \sigma_{stari}^{2}$ <br>
+uz alternativu: <br>
+$H_1$: $\sigma_{mladi}^{2} \neq \sigma_{stari}^{2}$
+```{r}
+var.test(mladi_drogerasi_trans$total_trans,stari_drogerasi_trans$total_trans, alternative = "two.sided")
+```
+F-test daje p-vrijednost $7.067 \times 10^{-7}$. I uz značaj $\alpha = 0.05$ daje 95%-tni interval pouzdanosti za omjer varijanci. $[0.8053216, 0.9106068]$ <br>
+Uz izračunati omjer iz danih podataka $0.8564523$.
+Statistički zaključujemo uz značaj 0.05 da varijance nisu jednake. Varijanca starih je veća od varijance mladih. <br>
+
+
+
+```{r}
+t.test(mladi_drogerasi_trans$total_trans, stari_drogerasi_trans$total_trans, alternative = "two.sided", var.equal=FALSE)
+```
+Uz dobiveni p-vrijednost T-testa zaključujemo uz značaj 0.05 da očekivane vrijednosti prosjeka testova na narkotike nisu iste. Također vidimo da među populacijama onih koji konzumiraju narkotike, mladi konzumiraju više. <br>
+
+## Možemo li na temelju dostupnih varijabli odrediti hoće li doći do ponavljanja kriminalnog ponašanja?
+
+Ponavljanje kriminalnog ponašanje označeno je u stupcu "Recidivisim_Within_3years". <br>
+Pokušat ćemo regresijom naći model koji će dovoljno dobro procjeniti vrijednost koju poprima stupac "Recidivisim_Within_3years". Budući da "Recidivisim_Within_3years" poprima vrijednosti "TRUE" i "FALSE" nemamo koristi od linearne regresije, već od logističke. <br>
+Logistička regresija transformira model linearne regresije $x^T \beta$ sigmoidalnom funkcijom $f(x) = \frac{1}{1-e^{-x}}$ <br>
+Time dobivamo funkciju $p(x) = f(x^T \mathbf{\beta})$ koja daje vrijednosti između $[0, 1]$. Budući da trebamo binarne vrijednosti "TRUE" i "FALSE" za $x_i$ koji daju $p>0.5$ označit ćemo s "TRUE", inaće "FALSE". <br>
+U dobivenim podacima imamo stupac zvan "Training_Sample", njime ćemo podijeliti podatke na skupove za "treniranje" i "testiranje". Nad skupom za treniranje će se provoditi maximum likelihood estimacija $\beta_i$, a nad skupom za testiranje ćemo provesti testiranje modela i njegovu efikasnost. <br>
+```{r}
+train_sample <- subset(recidivism_full, Training_Sample==1)
+test_sample <- subset(recidivism_full, Training_Sample==0)
 ```
 
-Pozivamo se na robusnost T-testa.
+### Možemo li predvidjeti hoće li doći do recidivizma znajući spol, rasu i razinu edukacije.
 ```{r}
-var.test(mladi_drogerasi_sqrt$total_sqrt,stari_drogerasi_sqrt$total_sqrt)
-```
-
-```{r}
-t.test(mladi_drogerasi_sqrt$total_sqrt, stari_drogerasi_sqrt$total_sqrt, alternative = "greater", var.equal=FALSE)
-```
-```{r}
-train_test <- subset(recidivism_full, Training_Sample==1)
-test_sample <- subset(recidivism_full, Training_Sample!=1)
-```
-```{r}
-model <- glm(Recidivism_Within_3years ~ Gender + Race + Education_Level
-             , data = train_test, family="binomial")
+model <- glm(Recidivism_Within_3years ~ Race + Gender + Education_Level
+             , data = train_sample, family="binomial")
 summary(model)
 ```
+Model koji uzima "Gender", "Race" i "Education_level" kao argumente ima sve parametre osim "Race" značajne (vrijednost P(>|z|) je veća od 0.05).
+
 ```{r}
+model$coefficients
+```
+Vidimo da je vrijednost $\beta$ uz RaceWHITE -0.0431 što je vrlo malo i možemo izostaviti "Race" kao argument u modelu. (glm() stvara k-1 "dummy" varijable za svaku varijablu s k kategorija zadanu u prvom argumentu funkcije glm().To radi kako bi mogao koristiti kategorijske podatke za regresiju, jer "High School Diploma"*0.59079413 nema smisla) <br>
+
+Pogledajmo koliko dobro model procjenjuje je li je došlo do recividizma za neku osobu opisanom samo s "Gender" i "Education_Level".
+
+```{r}
+model <- glm(Recidivism_Within_3years ~ Gender + Education_Level
+             , data = train_sample, family= binomial())
 probabilities <- predict(model, newdata = test_sample, type="response")
 predicted.classes <- ifelse(probabilities > 0.5, TRUE, FALSE)
 accuracy <- mean(predicted.classes == test_sample$Recidivism_Within_3years)
 print(accuracy)
 
 ```
+Preciznost modela je 0.6, što je "OK". <br>
+Pogledajmo neke predikcije nad pojedincima:
 
+```{r}
+osoba <- data.frame(Gender="M", Education_Level = "Less than HS diploma")
+p <- predict(model, osoba, type="response")
+p
+```
+Muškarac koji nema završenu srednju školu, prema modelu logističke regresije, procjenjujemo vjerojatnost od ~62% da ponovno počini zločin.
+
+
+```{r}
+osoba <- data.frame(Gender="F", Education_Level = "At least some college")
+p <- predict(model, osoba, type="response")
+p
+```
+Za žensku osobu koja ima završeni fakultet, procjenjujemo ~35% šanse da ponovno počini zločin. <br>
+
+Procijena recidivizma pomoću kršenja nadzornih aktivnosti.<br>
+Specifično: "Violations_ElectronicMonitoring", "Violations_Instruction", "Violations_FailToReport", "Violations_MoveWithoutPermission":
 ```{r}
 model <- glm(Recidivism_Within_3years ~ Violations_ElectronicMonitoring + Violations_Instruction + Violations_FailToReport + Violations_MoveWithoutPermission
-             , data = train_test, family="binomial")
+             , data = train_sample, family="binomial")
 probabilities <- predict(model, newdata = test_sample, type="response")
 predicted.classes <- ifelse(probabilities > 0.5, TRUE, FALSE)
 accuracy <- mean(predicted.classes == test_sample$Recidivism_Within_3years)
 print(accuracy)
 ```
 
+```{r}
+summary(model)
+```
+Uočimo da "FailToReport" ne utječe značajno na predikciju i mogli smo ga izostavit.
+
+### Pogledajmo još nekoliko modela logističke regresije:
+
+Condition_MH_SA, Condition_Cog_Ed, Condition_Other (uvjeti zbog kojeg je zatvorenik pušten na "Parole" ili "Probation"): <br>
 ```{r}
 model <- glm(Recidivism_Within_3years ~ Condition_MH_SA + Condition_Cog_Ed + Condition_Other
-             , data = train_test, family="binomial")
-probabilities <- predict(model, newdata = test_sample, type="response")
-predicted.classes <- ifelse(probabilities > 0.5, TRUE, FALSE)
-accuracy <- mean(predicted.classes == test_sample$Recidivism_Within_3years)
-print(accuracy)
-
-```
-
-```{r}
-model <- glm(Recidivism_Within_3years ~ Education_Level + Dependents
-             , data = train_test, family="binomial")
+             , data = train_sample, family="binomial")
 probabilities <- predict(model, newdata = test_sample, type="response")
 predicted.classes <- ifelse(probabilities > 0.5, TRUE, FALSE)
 accuracy <- mean(predicted.classes == test_sample$Recidivism_Within_3years)
 print(accuracy)
 ```
-```{r}
-model <- glm(Recidivism_Within_3years ~ Prior_Arrest_Episodes_Violent + Prior_Arrest_Episodes_PPViolationCharges
-             , data = train_test, family="binomial")
-probabilities <- predict(model, newdata = test_sample, type="response")
-predicted.classes <- ifelse(probabilities > 0.5, TRUE, FALSE) %>% na.omit()
-accuracy <- mean(predicted.classes == test_sample$Recidivism_Within_3years)
-print(accuracy)
+"Condition_MH_SA" (Mental health, Substance abuse) označava da je osoba puštena zbog mentalnog stanja ili puštena zbog korištenja narkotika. <br>
 
-```
 ```{r}
-model <- glm(Recidivism_Within_3years ~ Gender + Race
-             , data = train_test, family="binomial")
+model <- glm(Recidivism_Within_3years ~ Condition_MH_SA, data = train_sample, family="binomial")
+osoba <- data.frame(Condition_MH_SA = TRUE, Condition_Cog_Ed=TRUE, Condition_Other=TRUE)
+p <- predict(model, osoba , type="response")
+p
+```
+Procjenjujemo da zatvorenici koji su pušteni na Parole zbog ovisnosti ili mentalnog stanja imaju 62% šanse da ponove zločin. <br>
+<br>
+
+Education_Level <br>
+Procijena vjerojatnosti recidivizma znajući samo Education_level:
+```{r}
+model <- glm(Recidivism_Within_3years ~ Education_Level
+             , data = train_sample, family="binomial")
+probabilities <- predict(model, newdata = test_sample, type="response")
+predicted.classes <- ifelse(probabilities > 0.5, TRUE, FALSE)
+accuracy <- mean(predicted.classes == test_sample$Recidivism_Within_3years)
+print(accuracy)
+```
+
+Osoba s fakultetom:
+```{r}
+osoba <- data.frame(Education_Level = "At least some college")
+p <- predict(model, osoba, type="response")
+p
+```
+
+Osoba sa završenom srednjom školom:
+```{r}
+osoba <- data.frame(Education_Level = "High School Diploma")
+p <- predict(model, osoba, type="response")
+p
+```
+Procjenjujemo da je vjerojatnost recidivizma za osobu koja ima diplomu srednje škole ~61% veća od vjerojatnosti za osobu koja ima neki fakultet 45%. <br>
+
+Iznenađujuče najtočniji model od isprobanih dobivamo koristeći "Prior_Arrest_Episodes_PPViolationCharges":
+```{r}
+model <- glm(Recidivism_Within_3years ~ Prior_Arrest_Episodes_PPViolationCharges
+             , data = train_sample, family="binomial")
 probabilities <- predict(model, newdata = test_sample, type="response")
 predicted.classes <- ifelse(probabilities > 0.5, TRUE, FALSE) %>% na.omit()
 accuracy <- mean(predicted.classes == test_sample$Recidivism_Within_3years)
 print(accuracy)
 ```
+
+```{r}
+model$coefficients
+```
+Procjenjujemo da osoba koja ima što više kršenja Parolea prije osude ima veću šansu da ponovni recidivizam.
+
+```{r}
+osoba <- data.frame(Prior_Arrest_Episodes_PPViolationCharges ="5 or more")
+p<- predict(model, osoba,type="response" )
+p
+```
+Procjenjujemo izrazito veliku vjerojatnost od ~73% za ponovnim recidivizmom ako osoba ima 5 ili više kršenja Parolea.
+
 
