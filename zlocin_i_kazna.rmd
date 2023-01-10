@@ -1,7 +1,7 @@
 ---
 title: "Zločin i kazna - analiza kriminala"
 author: Luka Mucko, Filip Pankretić, Matej Lopotar, Tomislav Žiger
-output: html_document
+output: pdf_document
 ---
 ## Motivacija i opis problema
 Recidivizam je jedan od temeljnih pojmova u kaznenom pravosudu koji se odnosi na kriminalno ponašanje
@@ -24,6 +24,8 @@ library("corrplot")
 library("scales")
 library("caret")
 require("nortest")
+library("car")
+library("stats")
 ```
 # Postoji li razlika u duljini zatvorske kazne s obzirom na razinu obrazovanja?
 
@@ -438,7 +440,7 @@ Iznenađujuče najtočniji model od isprobanih dobivamo koristeći "Prior_Arrest
 model <- glm(Recidivism_Within_3years ~ Prior_Arrest_Episodes_PPViolationCharges
              , data = train_sample, family="binomial")
 probabilities <- predict(model, newdata = test_sample, type="response")
-predicted.classes <- ifelse(probabilities > 0.5, TRUE, FALSE) %>% na.omit()
+predicted.classes <- ifelse(probabilities >= 0.5, TRUE, FALSE) %>% na.omit()
 accuracy <- mean(predicted.classes == test_sample$Recidivism_Within_3years)
 print(accuracy)
 ```
@@ -455,4 +457,44 @@ p
 ```
 Procjenjujemo izrazito veliku vjerojatnost od ~73% za ponovnim recidivizmom ako osoba ima 5 ili više kršenja Parolea.
 
+## Konzumiraju li zatvorenici istu količinu narkotika neovisno o stupnju obrazovanja
+```{r}
+recidivism_full <- recidivism_full %>%
+  mutate(drugs = (DrugTests_THC_Positive + DrugTests_Cocaine_Positive +
+                DrugTests_Meth_Positive + DrugTests_Other_Positive)/4)
+```
+
+
+```{r}
+library(ggplot2)
+ggplot(data = recidivism_full, aes(x = Education_Level, y = drugs)) +
+  geom_boxplot() +
+  ggtitle("Boxplots of 'drugs' by 'Education_Level'")
+
+```
+
+```{r}
+bartlett.test(drugs ~ Education_Level, data=recidivism_full)
+```
+
+
+```{r}
+recidivism_full <- recidivism_full %>%
+  mutate(drugs = (DrugTests_THC_Positive + DrugTests_Cocaine_Positive +
+                DrugTests_Meth_Positive + DrugTests_Other_Positive)/4)
+recidivism_full$Education_Level <- as.factor(recidivism_full$Education_Level)
+
+model <- aov(drugs ~ Education_Level, data = recidivism_full)
+summary(model)
+```
+
+```{r}
+oneway.test(drugs ~ Education_Level, data = recidivism_full, var.equal = FALSE)
+```
+
+
+```{r}
+test <- kruskal.test(drugs ~ Education_Level, data = recidivism_full)
+print(test)
+```
 
