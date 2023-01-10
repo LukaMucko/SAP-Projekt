@@ -1,7 +1,7 @@
 ---
 title: "Zločin i kazna - analiza kriminala"
 author: Luka Mucko, Filip Pankretić, Matej Lopotar, Tomislav Žiger
-output: html_document
+output: pdf_document
 ---
 ## Motivacija i opis problema
 Recidivizam je jedan od temeljnih pojmova u kaznenom pravosudu koji se odnosi na kriminalno ponašanje
