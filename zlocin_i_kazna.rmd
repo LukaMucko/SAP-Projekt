@@ -25,6 +25,7 @@ library("corrplot")
 library("car")
 library("ggplot2")
 library("bestNormalize")
+library("AID")
 ```
 # Postoji li razlika u duljini zatvorske kazne s obzirom na razinu obrazovanja?
 
@@ -347,6 +348,8 @@ mladi_drogerasi <- mladi_drogerasi %>%
   mutate(total = rowSums(.[1:4])/4) %>%
   select(-DrugTests_THC_Positive,-DrugTests_Meth_Positive,-DrugTests_Cocaine_Positive,-DrugTests_Other_Positive)
 
+var_mladi <- var(mladi_drogerasi)
+var_stari <- var(stari_drogerasi)
 ```
 
 
@@ -456,6 +459,20 @@ geometrijska sredina starih:
 ```
 
 Razlike u aritmetičkoj sredini transformiranih podataka implicira razliku u aritmetičkoj sredini izvornih podataka. Stoga možemo statistički zaključiti da aritmetičke sredine među mladim osuđenicima koji koriste narkotike nije ista kao kod starih.
+
+Budući da je broj uzoraka izrazito velik, još jednom ćemo se uzdat u robusnost T-testa te ga provesti na netransformiranim podacima.
+
+Odredimo jesu li varijance jednake F-testom.
+```{r}
+var.test(mladi_drogerasi$total, stari_drogerasi$total)
+```
+Statistički zaključujemo da su varijance jednake.
+
+```{r}
+t.test(mladi_drogerasi$total, stari_drogerasi$total, var.equal = TRUE)
+```
+Ponovno odbacujemo nultu hipotezu o jednakosti srednjih vrijednosti.
+
 
 # Možemo li na temelju dostupnih varijabli odrediti hoće li doći do ponavljanja kriminalnog ponašanja?
 
@@ -652,6 +669,13 @@ ggplot(data = recidivism_full_filtered, aes(x = Education_Level, y = drugs)) +
 
 ```
 
+Pogledajmo srednje vrijednosti:
+```{r}
+means <- aggregate(drugs ~ Education_Level, data = recidivism_full_filtered, mean)
+means
+```
+
+
 Jesu li podaci normalni?
 ```{r}
 ggplot(recidivism_full_filtered, aes(x = drugs, fill = Education_Level)) +
@@ -668,8 +692,8 @@ $g(x;\lambda \neq 0) = \frac{x^{\lambda} - 1}{\lambda}$ <br>
 
 
 ```{r}
+recidivism_full_filtered <- recidivism_full_filtered %>% subset(select=c("Education_Level","drugs")) %>% na.omit()
 recidivism_full_filtered$boxcox <- bestNormalize::boxcox(recidivism_full_filtered$drugs)$x.t
-recidivism_full_filtered <- subset(recidivism_full_filtered, select=c("Education_Level","boxcox"))
 ```
 
 ```{r}
@@ -733,8 +757,9 @@ Podaci izgledaju normalno.
 
 Provedimo statistički test za normalnost.
 ```{r}
-shapiro.test(sample(residuals, size=5000, replace=TRUE))
+shapiro.test(sample(residuals, size=5000))
 ```
+Statistički zaključujemo da podaci nisu normalni.
 
 ```{r}
 qqnorm(residuals)
@@ -748,3 +773,9 @@ test <- kruskal.test(boxcox ~ Education_Level, data = recidivism_full_filtered)
 print(test)
 ```
 Kruskal-Wallisovim testom opet odbacujemo nultu hipotezu.
+
+Pogledajmo stvarne vrijednosti srednjih vrijednosti:
+```{r}
+means <- aggregate(drugs ~ Education_Level, data = recidivism_full_filtered, mean)
+means
+```
