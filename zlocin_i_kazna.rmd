@@ -52,12 +52,17 @@ print(contingency_table)
 ```
 Znajući kontingencijsku tablicu postavljamo hipoteze $H_0$ i $H_1$ <br>
 
-$H_0:$ Proporcije zatvorenih za neku klasu iz "education_level" naspram ukupnog broja zatvorenih u nekoj klasi iz "prison_years" je jednak za svaku klasu iz "prison_years".  Drugim riječima:<br> <br>
-Neka je $A = \text{contingency_table}$ i numerirajmo retke i stupce tablice A brojevima i={1,2,3} odnosno j={1,2,3,4}. <br>
+$H_0:$ Proporcije zatvorenih za neku klasu iz "education_level" naspram ukupnog broja zatvorenih u nekoj klasi iz "prison_years" je jednak za svaku klasu iz "prison_years".  Drugim riječima: \
+Neka je A = contingency_table i numerirajmo retke i stupce tablice A brojevima i={1, 2, 3} odnosno \ j={1, 2, 3, 4}. \
 Neka je $P_{ij} = \frac{A_{ij}}{\sum_{i=1}^{3} A_{ij}}$ <br>
+
 $H_0: p_{ij}=p_{ik} \  \forall i \in \{1,2,3\},\  \forall j,k \in \{1,2,3,4\}\  j \neq k$ <br>
+
 $H_1: p_{ij}\neq p_{ik}\  ...$ <br>
+
 Možemo testirati hipotezu $H_0\  \text{odnosno} \ H_1$ koristeći $\chi ^2$ test o jednakosti proporcija.
+
+Nulta hipoteza je ekvivalentna hipotezi $H_0'$: ne postoji povezanost između duljine zatvorske godine i razine obrazovanja.
 ```{r}
 chisq <- chisq.test(contingency_table)
 chisq
@@ -70,13 +75,17 @@ corrplot(chisq$residuals, is.cor = FALSE)
 ```
 <br>
 
-Pearsonov rezidual jest razlika dobivene i uočene vrijednosti normirane po korijenu očekivane.
-$r_ij = \frac{o_ij - e_ij}{\sqrt{e_ij}}$ kvadrati residuala doprinose vrijednosti testne statistike i time smanjuju p-vrijednost. Zato možemo reći sljedeće: <br>
-Kada je $r_ij$ > 0 (dovoljno veći od 0) kažemo da postoji asocijacija između retka i stupca jer je više uočeno nego očekivano, a dok je $r_ij$ < 0 onda kažemo da ne postoji asocijacija (ili postoji negativna asocijacija) jer je manje uočeno nego očekivano.
+Pearsonov rezidual jest razlika dobivene i uočene vrijednosti normirane po korijenu očekivane. <br>
 
-Plava boja predstavlja asocijaciju tj. povezanost između retka i stupca. Uočimo da postoji pozitivna asocijacija ljudi sa završenim fakultetom i više od 3 godine kazne. Također postoji negativna asocijacija s ljudima sa završenim fakultetom i kaznom od 1-2 godine. <br>
+$r_{ij} = \frac{o_{ij} - e_{ij}}{\sqrt{e_{ij}}}$, kvadrati residuala doprinose vrijednosti testne statistike i time smanjuju p-vrijednost. Zato možemo reći sljedeće: <br>
+
+Kada je $r_{ij}$ > 0 kažemo da postoji pozitivna asocijacija između retka i stupca jer je više uočeno nego očekivano, a dok je $r_{ij}$ < 0 onda kažemo postoji negativna asocijacija jer je manje uočeno nego očekivano. <br>
+
+Plava boja predstavlja pozitivnu asocijaciju između retka i stupca. Uočimo da postoji pozitivna asocijacija ljudi sa završenim fakultetom i više od 3 godine kazne. Također postoji negativna asocijacija s ljudima sa završenim fakultetom i kaznom od 1-2 godine. <br>
+
 Vidimo da je vrijednost testne statistike 223.12 i p-vrijednost $< 2.2 \times 10^{-16}$ što je značajno
 manje od $p << \alpha = 0.05$. <br>
+
 Dakle zaključujemo da **postoji razlika u duljini zatvorske kazne s obzirom na razinu obrazovanja!!**
 
 # Jesu li mlađe dobne skupine podložnije ponavljanju kriminala od starijih?
@@ -95,10 +104,12 @@ mladi <- sum(table[1:3,"freq"])
 stari <- sum(table[,"freq"])-mladi
 print(table)
 sprintf("Broj mladih je: %s",mladi)
-sprintf("Broj starijih je: %s",stari)
+sprintf("Broj starih je: %s",stari)
 ```
 Za mjeru ponovljenog kriminala koristit ćemo Recidivizam. <br>
+
 Postoji 1 stupac u tablici koji nam govori je li je zatvorenik počinio zločin 3 godina nakon puštanja na slobodu i 3 stupca koja predstavljaju u kojoj od te 3 godine je ponovno počinio zločin. To su sve: Recidivism_Within_3years, Recidivism_Arrest_Year1, Recidivism_Arrest_Year2, Recidivism_Arrest_Year3. 0=no/1=yes<br>
+
 Stoga možemo prebrojati sve one koji su ponovno počinili zločin.
 ```{r}
 ponovljeni_mladi <- nrow(subset(recidivism_full,
@@ -110,7 +121,11 @@ cat("Broj mladih/starih koji su ponovili zločin:",ponovljeni_mladi,ponovljeni_s
 
 ```
 
-Poznavajuči brojeve možemo odrediti $p_s$ i $p_m$ i provesti test:
+Poznavajuči brojeve možemo odrediti $p_s$ i $p_m$ i provesti test dviju proporcija uz hipoteze:
+
+$H_0$: $p_s = p_m$
+
+$H_1$: $p_s > p_m$
 ```{r}
 Pm <- ponovljeni_mladi/mladi
 Ps <- ponovljeni_stari/stari
@@ -118,16 +133,23 @@ rez <- prop.test(c(ponovljeni_mladi,ponovljeni_stari),c(mladi,stari), alternativ
 rez
 rez$p.value
 ```
-Dobivamo p-vrijednost $3.7478 \times 10^{-123}$ što je puno manje od nivoa značajnosti $\alpha = 0.05$. **Stoga odbacujemo nultu hipotezu u korist alternative i statistički zaključujemo uz značaj 0.05 da zatvorenici pušteni u svojoj "mladosti" skloniji ponavljanju kriminala.**
+Dobivamo p-vrijednost $3.7478 \times 10^{-123}$ što je puno manje od nivoa značajnosti $\alpha = 0.05$.
 
+**Stoga odbacujemo nultu hipotezu u korist alternative i statistički zaključujemo uz značaj 0.05 da zatvorenici pušteni u svojoj "mladosti" skloniji ponavljanju kriminala.**
 
-## Postoji li veza između korištene vrste narkotika i vrste zločina
+# Postoji li veza između korištene vrste narkotika i vrste zločina
 U tablici podataka je zabilježeno 8 različitih zločina prije osude (Felony, Misdemeanor, Violent, Property, Drug, PPViolationCharges, DomesticViolenceCharges, GunCharges) i korištenje 4 narkotika (THC, Cocaine, Meth i ostali) nakon puštanja iz zatvora, podatke o korištenju prije nemamo.
-Budući da su oznake zločina kategorijske (0, 1, 2 or more) koristit ćemo Pearsonov test korelacije ili $\chi^{2}$ test korelacije za odabrane parove zločina i korištenog narkotika. <br>
+
+Budući da su oznake zločina kategorijske (0, 1, 2 or more) koristit ćemo $\chi^{2}$ test korelacije za odabrane parove zločina i korištenog narkotika. <br>
+
 Korištenje narkotika se predstavlja u postotku pozitivnih testova 0-1. Te vrijednosti ćemo grupirati u 3 grupe. "Rijetko" ako je postotak <0.33, "Često" ako je postotak $\geq$ 0.33 i <0.66, te "Vrlo Često" ako je postotak $\geq$ 0.66. <br>
+
 Za svaki kombinaciju zločina i korištenog narkotika formiramo hipoteze: <br>
+
 $H_0$: Broj počinjenog kriminala je nezavisan postotku pozitivnih testova na neki narkotik. <br>
+
 $H_1$: Ti brojevi nisu nezavisni. <br>
+
 Pretvorimo kontinuirane podatke iz DrugTests u kategorijske:
 ```{r}
 recidivism_full$CocaineUsage <- cut(recidivism_full$DrugTests_Cocaine_Positive,
@@ -143,7 +165,9 @@ recidivism_full$OtherUsage <- cut(recidivism_full$DrugTests_Other_Positive,
                                     breaks=c(0,0.33,0.66,1),
                                     labels=c("Rijetko","Često","Vrlo Često"))
 ```
+
 Sada možemo provesti ukupno 4*8= 32 testa. <br>
+
 ```{r}
 narkotici<- c("MethUsage","CocaineUsage","THCUsage","OtherUsage")
 zlocin <- c("Prior_Conviction_Episodes_GunCharges",
@@ -165,35 +189,44 @@ for (narcotic in narkotici){
   }
 }
 ```
+
 ```{r}
 row.names(chisq_tests)<-c("GunCharges","Drug","Violent","Felony","PPViolationCharges","Misdemeanor","DomesticViolence","Property")
 chisq_tests
 ```
-Tablica iznad sadrži p-vrijednosti Pearsonovog $\chi^{2}$ testa. Za One kombinacije za koje je p vrijednost manja od 0.05 odbacujemo i odbacujemo nultu hipotezu o nezavisnosti kriminala i korištenog narkotika.
-Uočimo par neočekivanih rezultata: <br>
-Zatvorenici koji često konzumiraju THC odnosno produkte marihuane su zatvoreni zbog nasilja. Dok oni koji rijetko konzumiraju nisu. <br>
+Tablica iznad sadrži p-vrijednosti $\chi^{2}$ testa. Za One kombinacije za koje je p vrijednost manja od 0.05 odbacujemo nultu hipotezu o nezavisnosti kriminala i korištenog narkotika i prihvaćamo alternativu. <br>
+
+Pogledajmo rezultat s najmanjom p-vrijednosti: <br>
+
+Broj počinjenog kriminala koji spada u "misdemeanor" nije neovisan o korištenju THC-a. <br>
 
 ```{r}
-chisq<-chisq.test(recidivism_full$Prior_Conviction_Episodes_Viol,recidivism_full$THCUsage,simulate.p.value = TRUE)
+chisq<-chisq.test(recidivism_full$Prior_Conviction_Episodes_Misd, recidivism_full$THCUsage,simulate.p.value = TRUE)
 chisq
-chisq$expected
-chisq$observed
-corrplot(chisq$residuals, is.corr = FALSE)
 ```
-<br> Plavo označava da više zatvorenika od očekivanog koji često konzumiraju THC zatvoreno zbog nasilja. <br>
-Pogledajmo kokain i "property":
+
+Očekivane vrijednosti:
+```{r}
+chisq$expected
+```
+
+Uočene vrijednosti:
+```{r}
+chisq$observed
+```
+
 
 ```{r}
-chisq<-chisq.test(recidivism_full$Prior_Conviction_Episodes_Prop,recidivism_full$CocaineUsage,simulate.p.value = TRUE)
 corrplot(chisq$residuals, is.corr = FALSE)
 ```
-<br> Zatvorenici koji nerijetko konzumiraju kokain su prije osude počinili nekoliko zločina vezanih uz nekretnine. <br>
+
+Plavo označava da više zatvorenika od očekivanog koji često konzumiraju THC osuđeno zbog misdemeanora (vandalizam, pijana, posjedovanje droge!). Tj. da postoji pozitivna povezanost između nasilja i konzumiranja THC-a. <br>
 
 
 Ako ćemo gledati samo zloćine zbog kojih su osuđenici zatvoreni, tada koristimo stupac "Prison_Offense" koji poprima 5 vrijednosti: Violent/Sex, Violent/Non-Sex,
 Property, Drug, Other. <br>
 
-Time možemo provesti 1*4=4 testova.
+Time možemo provesti 4 testova.
 
 ```{r}
 cocaine<- table(recidivism_full$Prison_Offense, recidivism_full$CocaineUsage)
@@ -201,20 +234,25 @@ thc <- table(recidivism_full$Prison_Offense, recidivism_full$THCUsage)
 meth <- table(recidivism_full$Prison_Offense, recidivism_full$MethUsage)
 others <- table(recidivism_full$Prison_Offense, recidivism_full$OtherUsage)
 ```
+
+Cocaine:
 ```{r}
 cocaine_test <- chisq.test(cocaine, simulate.p.value = TRUE)
 cocaine_test
 ```
 
+THC:
 ```{r}
 thc_test <- chisq.test(thc, simulate.p.value = TRUE)
 thc_test
 ```
 
+Meth:
 ```{r}
 chisq.test(meth, simulate.p.value = TRUE)
 ```
 
+Others:
 ```{r}
 chisq.test(others, simulate.p.value = TRUE)
 
@@ -222,7 +260,7 @@ chisq.test(others, simulate.p.value = TRUE)
 
 Statistički zaključujemo da je broj počinjenog kriminala zbog kojeg su osuđenici zatvoreni neovisan o postotku pozitivnih testova na metamfetamine i na "ostale" droge.
 
-Pogledajmo reziduale za kokain i thc.
+Pogledajmo reziduale za kokain i thc gdje odbacujemo nultu hipotezu i prihvaćamo alternativnu uz značaj 0.05.
 
 ```{r}
 corrplot(cocaine_test$residuals, is.corr=FALSE)
@@ -234,24 +272,32 @@ Uočavamo da postoji povezanost između "property" kriminala i čestog i vrlo č
 corrplot(thc_test$residuals, is.corr=FALSE)
 ```
 
-Vidimo da postoji povezanost između "property" kriminala i korištenja THC-a. Također vidimo da ne postoji povezanost između "Violent/Sex" i korištenja THC-a, isto tako za "Drug" kriminal.
+Vidimo da postoji pozitivna povezanost između "property" kriminala i korištenja THC-a. Također vidimo da ne postoji pozitivna povezanost između "Violent/Sex" i korištenja THC-a, isto tako za "Drug" kriminal.
 
-## Jesu li mladi osuđenici skloniji drogama?
+# Jesu li mladi osuđenici skloniji drogama?
 
 U tablici podataka koristeći postotak pozitivnih testova na različite droge možemo ispitati koja skupina zatvorenika je barem jednom koristila drogu u zatvoru. 
 
-
-
 ```{r}
-mladi_droge <-  nrow(subset(recidivism_full, (DrugTests_THC_Positive!=0 | DrugTests_Meth_Positive!=0 | DrugTests_Cocaine_Positive!=0 | DrugTests_Cocaine_Positive!=0) & Age_at_Release %in% c("18-22","23-27","28-32")))
+mladi_droge <-  nrow(subset(recidivism_full, (DrugTests_THC_Positive!=0
+        | DrugTests_Meth_Positive!=0
+        | DrugTests_Cocaine_Positive!=0
+        | DrugTests_Cocaine_Positive!=0)
+        & Age_at_Release %in% c("18-22","23-27","28-32")))
 
-stari_droge <- nrow(subset(recidivism_full, (DrugTests_THC_Positive!=0 | DrugTests_Meth_Positive!=0 | DrugTests_Cocaine_Positive!=0 | DrugTests_Cocaine_Positive!=0) & Age_at_Release %in% c("33-37","38-42","43-47","48 or older")))
+stari_droge <- nrow(subset(recidivism_full, (DrugTests_THC_Positive!=0
+        | DrugTests_Meth_Positive!=0
+        | DrugTests_Cocaine_Positive!=0
+        | DrugTests_Cocaine_Positive!=0)
+        & Age_at_Release %in% c("33-37","38-42","43-47","48 or older")))
 
 cat("Broj mladih/starih koji su skloni drogama:",mladi_droge,stari_droge)
 
 
 ```
+
 Vidimo da veći broj mlađih zatvorenika koristi drogu iako ih je manje od starijih u tablici
+
 ```{r}
 Dm <- mladi_droge/mladi
 Ds <- stari_droge/stari
@@ -263,31 +309,35 @@ rez$p.value
 Dobivamo p-vrijednost $1.069374 \times 10^{-89}$ što je manje od nivoa značajnosti $\alpha = 0.05$. **Stoga odbacujemo nultu hipotezu u korist alternative i statistički zaključujemo uz značaj 0.05 da su mlađi zatvorenici skloniji narkoticima**
 
 
-## Od onih koji konzumiraju narkotike, konzumiraju li obje dobne skupine u prosjeku istu količinu narkotika
+# Od onih koji konzumiraju narkotike, konzumiraju li obje dobne skupine u prosjeku istu količinu narkotika
 
-Provedimo jednostavan T-test za usporedbu očekivanih vrijednosti iz normalne distribucije sa različitim varijancama. <br>
+Provedimo T-test za usporedbu očekivanih vrijednosti iz normalne distribucije. <br>
+
 $H_0:$ $\mu_{\text{mladi}} = \mu_{\text{stari}}$ <br>
+
 $H_1:$ očekivane vrijednosti nisu iste. <br>
+
 $\mu$ označavaju očekivanu prosjeka rezultata iz testova droge, stupci DrugTests_Cocaine_Positive ...<br>
 <br>
+
 Izdvojimo stare i mlade "drogeraše". Oni koji ne konzumiraju narkotike definiramo tako da imaju svaki test na drogu = 0. <br>
 
 ```{r}
 stari_drogerasi <- recidivism_full %>%
   select(DrugTests_THC_Positive, DrugTests_Meth_Positive, DrugTests_Cocaine_Positive, DrugTests_Other_Positive, Age_at_Release) %>%
   filter((DrugTests_THC_Positive!=0 | DrugTests_Meth_Positive!=0 | DrugTests_Cocaine_Positive!=0 | DrugTests_Cocaine_Positive!=0) & Age_at_Release %in% c("33-37","38-42","43-47","48 or older") ) %>%
-  filter(rowSums(.[,1:4]) > 0) %>% na.omit()
+  filter(rowSums(.[,1:4]) >= 0) %>% na.omit()
 
 mladi_drogerasi <- recidivism_full %>%
   select(DrugTests_THC_Positive, DrugTests_Meth_Positive, DrugTests_Cocaine_Positive, DrugTests_Other_Positive, Age_at_Release) %>%
   filter((DrugTests_THC_Positive!=0 | DrugTests_Meth_Positive!=0 | DrugTests_Cocaine_Positive!=0 | DrugTests_Cocaine_Positive!=0) & Age_at_Release %in% c("18-22","23-27","28-32") ) %>%
-  filter(rowSums(.[,1:4]) > 0) %>% na.omit()
+  filter(rowSums(.[,1:4]) >= 0) %>% na.omit()
 
 summary(stari_drogerasi)
 summary(mladi_drogerasi)
 ```
 
-Napravimo prosjek testova na narkotike i spremimo vrijednost u stupac total:
+Pronađimo prosjek testova na narkotike i spremimo vrijednost u stupac total:
 ```{r}
 stari_drogerasi <- stari_drogerasi %>%
   mutate(total = rowSums(.[1:4])/4) %>%
@@ -301,13 +351,17 @@ mladi_drogerasi <- mladi_drogerasi %>%
 
 
 ```{r}
-hist(mladi_drogerasi$total)
-hist(stari_drogerasi$total)
+ggplot() +
+  geom_histogram(data = mladi_drogerasi, aes(x = total), fill = "blue", alpha = 0.5) +
+  geom_histogram(data = stari_drogerasi, aes(x = total), fill = "red", alpha = 0.5) +
+  ggtitle("Histogram of 'total' column in mladi_drogerasi and stari_drogerasi") +
+  xlab("Total") +
+  ylab("Count")
 ```
 
 Prema izgledu histograma, podaci ne nalikuju na normalnu distribuciju. Ali možda možemo naći nekakvu transformaciju nakon koje će podaci biti normalno distribuirani. <br>
 
-Pogledajmo transformaciju $f(x)=\log_{5} x$ <br>
+Pogledajmo transformaciju $\log_{5} x$ <br>
 ```{r}
 stari_drogerasi_trans <- stari_drogerasi %>%
   mutate(total_trans = log(total, base=5))
@@ -315,15 +369,19 @@ stari_drogerasi_trans <- stari_drogerasi %>%
 mladi_drogerasi_trans <- mladi_drogerasi %>%
         mutate(total_trans = log(total, base=5))
 
-hist(mladi_drogerasi_trans$total_trans)
-hist(stari_drogerasi_trans$total_trans)
+ggplot() +
+  geom_histogram(data = mladi_drogerasi_trans, aes(x = total_trans), fill = "blue", alpha = 0.5) +
+  geom_histogram(data = stari_drogerasi_trans, aes(x = total_trans), fill = "red", alpha = 0.5) +
+  ggtitle("Histogram of 'total' column in mladi_drogerasi_trans and stari_drogerasi_trans") +
+  xlab("Total") +
+  ylab("Count")
+
 ```
 
 Vidimo da distribucije donekle nalikuju na normalnu razdiobu<br>
 
-Uspoređujemo $\log_{5}\mu_{\text{mladi}} = \log_{5}\mu_{\text{stari}}$
 ```{r}
-boxplot(stari_drogerasi_trans$total_trans, mladi_drogerasi_trans$total_trans )
+boxplot(stari_drogerasi_trans$total_trans, mladi_drogerasi_trans$total_trans)
 
 ```
 
@@ -332,28 +390,39 @@ Pogledajmo QQ-plot koji nam govori koliko smo "bliski" normalnoj razdiobi.
 qqnorm(stari_drogerasi_trans$total_trans)
 qqline(stari_drogerasi_trans$total_trans)
 ```
-Vidimo da je distribucija "stari_drogerasi_trans" nije sasvim normalna, ali uz nisku razinu značajnosti ćemo uzeti da je.
+Vidimo da je distribucija "stari_drogerasi_trans" nije sasvim normalna zbog devijacija na desnom repu
 
 
 ```{r}
 qqnorm(mladi_drogerasi_trans$total_trans)
 qqline(mladi_drogerasi_trans$total_trans)
 ```
-<br> Ista stvar za distribuciju "mladi_drogerasi_trans". Zbog značanjih devijacija od pravca ne možemo reći da su podaci normalno distribuirani, ali ćemo uzeti da jesu zbog robusnosti T-testa. <br>
+Zbog značanjih devijacija od pravca ne možemo reći da su podaci normalno distribuirani. <br>
 
-Pogledajmo konkretne p-vrijednosti nekog statističkog testa normalnosti.
+Pogledajmo konkretne p-vrijednosti Shapiro-Wilkovog testa normalnosti.
 ```{r}
 shapiro.test(stari_drogerasi_trans$total_trans)
 ```
-Shapiro-Wilkov test normalnosti daje p-vrijednost $1.733 \times 10^{-11}$. Uz značaj od 0.05 možemo statistički zaključiti da transformirani podaci nisu normalno distribuirani.
+Shapiro-Wilkov test normalnosti daje p-vrijednost $1.733 \times 10^{-11}$. Uz značaj od 0.05 možemo statistički zaključiti da transformirani za starije osuđenike nisu normalno distribuirani.
 
-Iako podaci nisu normalni osim što histogrami donekle nalikuju na normalnu distribucij, pozivamo se na robusnost T-testa i ipak ga provodimo uz pretpostavku da su podaci nezavisni i nad rezultatima t-testa ćemo donositi zaključke. <br>
+```{r}
+shapiro.test(mladi_drogerasi_trans$total_trans)
+```
+Statistički zaključujemo da podaci za mlade osuđenike koji konzumiraju narkotike nisu normalno distribuirani.
+
+Iako podaci nisu normalni osim što histogrami donekle nalikuju na normalnu distribuciju, pozivamo se na robusnost T-testa i ipak ga provodimo na log transformiranim podacima uz pretpostavku da su podaci nezavisni i nad rezultatu t-testa ćemo donositi zaključke. <br>
 
 Prije provedbe t-testa moramo znati jesu li varijance jednake, budući da nisu poznate.<br>
+
 Stoga provodimo F-test s hipotezama: <br>
+
 $H_0$: $\sigma_{mladi}^{2} = \sigma_{stari}^{2}$ <br>
+
 uz alternativu: <br>
+
 $H_1$: $\sigma_{mladi}^{2} \neq \sigma_{stari}^{2}$
+
+nad log-transformiranim podacima
 ```{r}
 var.test(mladi_drogerasi_trans$total_trans,stari_drogerasi_trans$total_trans, alternative = "two.sided")
 ```
@@ -361,26 +430,51 @@ F-test daje p-vrijednost $7.067 \times 10^{-7}$. I uz značaj $\alpha = 0.05$ da
 Uz izračunati omjer iz danih podataka $0.8564523$.
 Statistički zaključujemo uz značaj 0.05 da varijance nisu jednake. Varijanca starih je veća od varijance mladih. <br>
 
+Sada možemo provesti T-test uz nejednake varijance. Poznavanje varijanci nam određuje broj sloboda i testntu statistiku.
+Budući da smo podatke transformirali logaritmom hipoteze će sada glasiti:
 
+$H_0$: geometrijske sredine starih i mladih su iste.
 
+$H_1$: geometrijske sredine starih i mladih nisu iste.
+
+gdje "stari" i "mladi" predstavljaju transformirane podatke.
 ```{r}
-t.test(mladi_drogerasi_trans$total_trans, stari_drogerasi_trans$total_trans, alternative = "two.sided", var.equal=FALSE)
+t_test <- t.test(mladi_drogerasi_trans$total_trans, stari_drogerasi_trans$total_trans,
+       alternative = "two.sided", var.equal=FALSE)
+t_test
 ```
-Uz dobiveni p-vrijednost T-testa zaključujemo uz značaj 0.05 da očekivane vrijednosti prosjeka testova na narkotike nisu iste. Također vidimo da među populacijama onih koji konzumiraju narkotike, mladi konzumiraju više. <br>
+Uz dobivenu p-vrijednost T-testa zaključujemo uz značaj 0.05 da srednje vrijednosti petog logaritma podataka nisu iste odnosno geometrijske sredine izvornih podataka nisu iste. <br>
 
-## Možemo li na temelju dostupnih varijabli odrediti hoće li doći do ponavljanja kriminalnog ponašanja?
+geometrijska sredina mladih:
+```{r}
+5^(-1.923590)
+```
+
+geometrijska sredina starih:
+```{r}
+5^(-2.037292)
+```
+
+Razlike u aritmetičkoj sredini transformiranih podataka implicira razliku u aritmetičkoj sredini izvornih podataka. Stoga možemo statistički zaključiti da aritmetičke sredine među mladim osuđenicima koji koriste narkotike nije ista kao kod starih.
+
+# Možemo li na temelju dostupnih varijabli odrediti hoće li doći do ponavljanja kriminalnog ponašanja?
 
 Ponavljanje kriminalnog ponašanje označeno je u stupcu "Recidivisim_Within_3years". <br>
+
 Pokušat ćemo regresijom naći model koji će dovoljno dobro procjeniti vrijednost koju poprima stupac "Recidivisim_Within_3years". Budući da "Recidivisim_Within_3years" poprima vrijednosti "TRUE" i "FALSE" nemamo koristi od linearne regresije, već od logističke. <br>
-Logistička regresija transformira model linearne regresije $x^T \beta$ sigmoidalnom funkcijom $f(x) = \frac{1}{1-e^{-x}}$ <br>
+
+Logistička regresija transformira model linearne regresije $x^T \beta$ sigmoidalnom funkcijom $f(x) = \frac{1}{1-e^{-x}}$. <br>
+
 Time dobivamo funkciju $p(x) = f(x^T \mathbf{\beta})$ koja daje vrijednosti između $[0, 1]$. Budući da trebamo binarne vrijednosti "TRUE" i "FALSE" za $x_i$ koji daju $p>0.5$ označit ćemo s "TRUE", inaće "FALSE". <br>
+
 U dobivenim podacima imamo stupac zvan "Training_Sample", njime ćemo podijeliti podatke na skupove za "treniranje" i "testiranje". Nad skupom za treniranje će se provoditi maximum likelihood estimacija $\beta_i$, a nad skupom za testiranje ćemo provesti testiranje modela i njegovu efikasnost. <br>
+
 ```{r}
 train_sample <- subset(recidivism_full, Training_Sample==1)
 test_sample <- subset(recidivism_full, Training_Sample==0)
 ```
 
-### Možemo li predvidjeti hoće li doći do recidivizma znajući spol, rasu i razinu edukacije.
+**Možemo li predvidjeti hoće li doći do recidivizma znajući spol, rasu i razinu edukacije.**
 ```{r}
 model <- glm(Recidivism_Within_3years ~ Race + Gender + Education_Level
              , data = train_sample, family="binomial")
@@ -404,7 +498,8 @@ accuracy <- mean(predicted.classes == test_sample$Recidivism_Within_3years)
 print(accuracy)
 
 ```
-Preciznost modela je 0.6, što je "OK". <br>
+Preciznost modela je 0.6, što je OK. <br>
+
 Pogledajmo neke predikcije nad pojedincima:
 
 ```{r}
@@ -423,6 +518,7 @@ p
 Za žensku osobu koja ima završeni fakultet, procjenjujemo ~35% šanse da ponovno počini zločin. <br>
 
 Procijena recidivizma pomoću kršenja nadzornih aktivnosti.<br>
+
 Specifično: "Violations_ElectronicMonitoring", "Violations_Instruction", "Violations_FailToReport", "Violations_MoveWithoutPermission":
 ```{r}
 model <- glm(Recidivism_Within_3years ~ Violations_ElectronicMonitoring + Violations_Instruction + Violations_FailToReport + Violations_MoveWithoutPermission
@@ -438,7 +534,7 @@ summary(model)
 ```
 Uočimo da "FailToReport" ne utječe značajno na predikciju i mogli smo ga izostavit.
 
-### Pogledajmo još nekoliko modela logističke regresije:
+**Pogledajmo još nekoliko modela logističke regresije:**
 
 Condition_MH_SA, Condition_Cog_Ed, Condition_Other (uvjeti zbog kojeg je zatvorenik pušten na "Parole" ili "Probation"): <br>
 ```{r}
@@ -458,7 +554,6 @@ p <- predict(model, osoba , type="response")
 p
 ```
 Procjenjujemo da zatvorenici koji su pušteni na Parole zbog ovisnosti ili mentalnog stanja imaju 62% šanse da ponove zločin. <br>
-<br>
 
 Education_Level <br>
 Procijena vjerojatnosti recidivizma znajući samo Education_level:
@@ -499,7 +594,7 @@ print(accuracy)
 ```{r}
 model$coefficients
 ```
-Procjenjujemo da osoba koja ima što više kršenja Parolea prije osude ima veću šansu da ponovni recidivizam.
+Vidimo da osoba koja ima što više kršenja Parolea prije osude ima veću šansu da ponovni recidivizam.
 
 ```{r}
 osoba <- data.frame(Prior_Arrest_Episodes_PPViolationCharges ="5 or more")
@@ -508,13 +603,15 @@ p
 ```
 Procjenjujemo izrazito veliku vjerojatnost od ~73% za ponovnim recidivizmom ako osoba ima 5 ili više kršenja Parolea.
 
-## Konzumiraju li zatvorenici istu količinu narkotika neovisno o stupnju obrazovanja
+# Konzumiraju li zatvorenici istu količinu narkotika neovisno o stupnju obrazovanja
 Postavljamo hipoteze, neka je $\mu_i$ prosječna vrijednost prosjeka testova na droge. Education_Level poprima tri vrijednosti: "At least some college" (i=1), "Less than HS diploma" (i=2), "High School Diploma" (i=3). <br>
+
 $H_0$: $\mu_1 = \mu_2 = \mu_3$ <br>
+
 $H_1$: barem dva $\mu$ nisu jednaka.
 
 Za ovakvo postavljene hipoteze nije prikladno koristiti t-test 3 puta zbog nakupljanja greške prve vrste. Stoga, metoda koju ćemo koristiti jest ANOVA (Analysis of Variance). <br>
-ANOVA se provodi uz pretpostavku normalnosti distribucije reziduala i da su varijance među grupama (stupanj obrazovanja) iste. <br>
+ANOVA se provodi uz pretpostavku normalnosti distribucije reziduala, da su varijance među grupama (stupanj obrazovanja) iste i nezavisnost grupa. <br>
 
 Uzmimo prosjek testova za droge i spremimo rezultat u stupac "drugs".
 ```{r}
@@ -538,10 +635,9 @@ ggplot(recidivism_full, aes(x = drugs, fill = Education_Level)) +
   ggtitle("Histograms of drugs use by Education Level") +
   xlab("Drugs use") +
   ylab("Count")
-
 ```
 
-**Zbog toga što se većina zatvorenika ne drogira, izdvojit ćemo one koji koriste narkotike i nad njima ćemo provoditi testove.**
+Zbog toga što se većina zatvorenika ne drogira, izdvojit ćemo one koji koriste narkotike i nad njima ćemo provoditi testove.
 Sada postavljavmo pitanje: **Od onih zatvorenika koji konzumiraju narkotike, konzumiraju li istu količinu neovisno o stupnju obrazovanja?**
 Hipoteze ostaju iste
 ```{r}
@@ -564,8 +660,9 @@ ggplot(recidivism_full_filtered, aes(x = drugs, fill = Education_Level)) +
   xlab("Drugs use") +
   ylab("Count")
 ```
-ANOVA ne zahtijeva normalnu distribuciju podataka, samo reziduala, ali ćemo ipak transformirati podatke Box-Cox transformacijom:
+ANOVA ne zahtijeva normalnu distribuciju podataka, samo reziduala, ali ćemo ipak transformirati podatke Box-Cox transformacijom.
 Box-Cox transformacija maximum likelihood estimacijom pronalazi $\lambda$ i transformira podatke na sljedeći naćin: <br>
+
 $g(x;\lambda = 0) = \log x$ <br>
 $g(x;\lambda \neq 0) = \frac{x^{\lambda} - 1}{\lambda}$ <br>
 
@@ -585,7 +682,7 @@ ggplot(recidivism_full_filtered, aes(x = boxcox, fill = Education_Level)) +
 Distribucije izgledaju puno bolje. Pogledajmo statističkim testom jesu li normalni. <br>
 
 ```{r}
-shapiro.test(sample(recidivism_full_filtered$boxcox, size=5000, replace=TRUE))
+shapiro.test(sample(recidivism_full_filtered$boxcox, size=5000))
 ```
 
 Pogledajmo srednje vrijednosti:
@@ -602,8 +699,11 @@ varijance
 Vidimo da su varijance otprilike iste. Približno jednake 1.<br>
 
 Provedimo statistički test koji testira hipoteze:
+
 $H_0$: varijance su jednake. <br>
+
 $H_1$: barem dvije varijance nisu jednake.
+
 Tu ćemo se pozvati na Bartlettov test o jednakosti varijanci:
 ```{r}
 bartlett.test(boxcox ~ Education_Level, data=recidivism_full_filtered)
@@ -617,6 +717,7 @@ model <- aov(boxcox ~ Education_Level, data = recidivism_full_filtered)
 summary(model)
 ```
 p-vrijednost ANOVA-e jest manja od $2\dot 10^{-16}$.
+
 **Stoga statistički zaključujemo uz značaj 0.05 da se među zatvorenicima koji konzumiraju narkotike (prosjek veći od 0) prosječna vrijednost pozitivnih testova na droge nije jednaka za svaki stupanj obrazovanja**
 
 ANOVA zahtijeva normalnu distribucija reziduala.
@@ -639,11 +740,11 @@ shapiro.test(sample(residuals, size=5000, replace=TRUE))
 qqnorm(residuals)
 qqline(residuals)
 ```
-QQ-plotom vidimo da su podaci "većinom" normalni osim devijacija na desnom repu.
+QQ-plotom vidimo da su podaci "većinom" normalni osim devijacija na desnom repu, stoga je korištenje ANOVA-e opravdano
 
 Postoji naćin da testiramo iste hipoteze neovisno o distribuciji podataka. Takve metode zovemo neparametarskim i neparametarski ekvivalent jednofaktorskoj ANOVA-i je Kruskal-Wallisov test.
 ```{r}
 test <- kruskal.test(boxcox ~ Education_Level, data = recidivism_full_filtered)
 print(test)
 ```
-Kruskal-Wallisovim testom opet potvrđujemo zaključak od maloprije.
+Kruskal-Wallisovim testom opet odbacujemo nultu hipotezu.
