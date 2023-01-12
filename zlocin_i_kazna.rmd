@@ -1,7 +1,7 @@
 ---
 title: "Zločin i kazna - analiza kriminala"
 author: Luka Mucko, Filip Pankretić, Matej Lopotar, Tomislav Žiger
-output: html_document
+output: pdf_document
 ---
 ## Motivacija i opis problema
 Recidivizam je jedan od temeljnih pojmova u kaznenom pravosudu koji se odnosi na kriminalno ponašanje
@@ -53,8 +53,8 @@ print(contingency_table)
 Znajući kontingencijsku tablicu postavljamo hipoteze $H_0$ i $H_1$ <br>
 
 $H_0:$ Proporcije zatvorenih za neku klasu iz "education_level" naspram ukupnog broja zatvorenih u nekoj klasi iz "prison_years" je jednak za svaku klasu iz "prison_years".  Drugim riječima:<br> <br>
-Neka je $A = \text{"kontingencijska tablica"}$ i numerirajmo retke i stupce tablice A brojevima i={1,2,3} odnosno j={1,2,3,4}. <br>
-Neka je $P_{ij} = \frac{A_{ij}}{\sum_{i=1}^{3} A_{ij}}$ (vidi ispis koda 5.)<br>
+Neka je $A = \text{contingency_table}$ i numerirajmo retke i stupce tablice A brojevima i={1,2,3} odnosno j={1,2,3,4}. <br>
+Neka je $P_{ij} = \frac{A_{ij}}{\sum_{i=1}^{3} A_{ij}}$ <br>
 $H_0: p_{ij}=p_{ik} \  \forall i \in \{1,2,3\},\  \forall j,k \in \{1,2,3,4\}\  j \neq k$ <br>
 $H_1: p_{ij}\neq p_{ik}\  ...$ <br>
 Možemo testirati hipotezu $H_0\  \text{odnosno} \ H_1$ koristeći $\chi ^2$ test o jednakosti proporcija.
@@ -62,12 +62,18 @@ Možemo testirati hipotezu $H_0\  \text{odnosno} \ H_1$ koristeći $\chi ^2$ tes
 chisq <- chisq.test(contingency_table)
 chisq
 ```
-Prikažimo reziduale pomoću "corrplot" paketa:
+
+Prikažimo reziduale:
 ```{r}
 corrplot(chisq$residuals, is.cor = FALSE)
 
 ```
 <br>
+
+Pearsonov rezidual jest razlika dobivene i uočene vrijednosti normirane po korijenu očekivane.
+$r_ij = \frac{o_ij - e_ij}{\sqrt{e_ij}}$ kvadrati residuala doprinose vrijednosti testne statistike i time smanjuju p-vrijednost. Zato možemo reći sljedeće: <br>
+Kada je $r_ij$ > 0 (dovoljno veći od 0) kažemo da postoji asocijacija između retka i stupca jer je više uočeno nego očekivano, a dok je $r_ij$ < 0 onda kažemo da ne postoji asocijacija (ili postoji negativna asocijacija) jer je manje uočeno nego očekivano.
+
 Plava boja predstavlja asocijaciju tj. povezanost između retka i stupca. Uočimo da postoji pozitivna asocijacija ljudi sa završenim fakultetom i više od 3 godine kazne. Također postoji negativna asocijacija s ljudima sa završenim fakultetom i kaznom od 1-2 godine. <br>
 Vidimo da je vrijednost testne statistike 223.12 i p-vrijednost $< 2.2 \times 10^{-16}$ što je značajno
 manje od $p << \alpha = 0.05$. <br>
@@ -92,7 +98,7 @@ sprintf("Broj mladih je: %s",mladi)
 sprintf("Broj starijih je: %s",stari)
 ```
 Za mjeru ponovljenog kriminala koristit ćemo Recidivizam. <br>
-Postoje 1 stupac u tablici koji nam govori je li je zatvorenik počinio zločin 3 godina nakon puštanja na slobodu i 3 stupca koja predstavljaju je li je uhićen u nekoj od te 3 godine. To su sve: Recidivism_Within_3years, Recidivism_Arrest_Year1, Recidivism_Arrest_Year2, Recidivism_Arrest_Year3. 0=no/1=yes<br>
+Postoji 1 stupac u tablici koji nam govori je li je zatvorenik počinio zločin 3 godina nakon puštanja na slobodu i 3 stupca koja predstavljaju u kojoj od te 3 godine je ponovno počinio zločin. To su sve: Recidivism_Within_3years, Recidivism_Arrest_Year1, Recidivism_Arrest_Year2, Recidivism_Arrest_Year3. 0=no/1=yes<br>
 Stoga možemo prebrojati sve one koji su ponovno počinili zločin.
 ```{r}
 ponovljeni_mladi <- nrow(subset(recidivism_full,
@@ -103,6 +109,7 @@ ponovljeni_stari <- nrow(subset(recidivism_full,
 cat("Broj mladih/starih koji su ponovili zločin:",ponovljeni_mladi,ponovljeni_stari)
 
 ```
+
 Poznavajuči brojeve možemo odrediti $p_s$ i $p_m$ i provesti test:
 ```{r}
 Pm <- ponovljeni_mladi/mladi
@@ -112,6 +119,7 @@ rez
 rez$p.value
 ```
 Dobivamo p-vrijednost $3.7478 \times 10^{-123}$ što je puno manje od nivoa značajnosti $\alpha = 0.05$. **Stoga odbacujemo nultu hipotezu u korist alternative i statistički zaključujemo uz značaj 0.05 da zatvorenici pušteni u svojoj "mladosti" skloniji ponavljanju kriminala.**
+
 
 ## Postoji li veza između korištene vrste narkotika i vrste zločina
 U tablici podataka je zabilježeno 8 različitih zločina prije osude (Felony, Misdemeanor, Violent, Property, Drug, PPViolationCharges, DomesticViolenceCharges, GunCharges) i korištenje 4 narkotika (THC, Cocaine, Meth i ostali) nakon puštanja iz zatvora, podatke o korištenju prije nemamo.
@@ -182,7 +190,51 @@ corrplot(chisq$residuals, is.corr = FALSE)
 <br> Zatvorenici koji nerijetko konzumiraju kokain su prije osude počinili nekoliko zločina vezanih uz nekretnine. <br>
 
 
+Ako ćemo gledati samo zloćine zbog kojih su osuđenici zatvoreni, tada koristimo stupac "Prison_Offense" koji poprima 5 vrijednosti: Violent/Sex, Violent/Non-Sex,
+Property, Drug, Other. <br>
 
+Time možemo provesti 1*4=4 testova.
+
+```{r}
+cocaine<- table(recidivism_full$Prison_Offense, recidivism_full$CocaineUsage)
+thc <- table(recidivism_full$Prison_Offense, recidivism_full$THCUsage)
+meth <- table(recidivism_full$Prison_Offense, recidivism_full$MethUsage)
+others <- table(recidivism_full$Prison_Offense, recidivism_full$OtherUsage)
+```
+```{r}
+cocaine_test <- chisq.test(cocaine, simulate.p.value = TRUE)
+cocaine_test
+```
+
+```{r}
+thc_test <- chisq.test(thc, simulate.p.value = TRUE)
+thc_test
+```
+
+```{r}
+chisq.test(meth, simulate.p.value = TRUE)
+```
+
+```{r}
+chisq.test(others, simulate.p.value = TRUE)
+
+```
+
+Statistički zaključujemo da je broj počinjenog kriminala zbog kojeg su osuđenici zatvoreni neovisan o postotku pozitivnih testova na metamfetamine i na "ostale" droge.
+
+Pogledajmo reziduale za kokain i thc.
+
+```{r}
+corrplot(cocaine_test$residuals, is.corr=FALSE)
+```
+
+Uočavamo da postoji povezanost između "property" kriminala i čestog i vrlo čestog korištenja kokaina.
+
+```{r}
+corrplot(thc_test$residuals, is.corr=FALSE)
+```
+
+Vidimo da postoji povezanost između "property" kriminala i korištenja THC-a. Također vidimo da ne postoji povezanost između "Violent/Sex" i korištenja THC-a, isto tako za "Drug" kriminal.
 
 ## Jesu li mladi osuđenici skloniji drogama?
 
