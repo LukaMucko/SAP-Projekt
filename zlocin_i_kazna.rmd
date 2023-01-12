@@ -433,14 +433,19 @@ F-test daje p-vrijednost $7.067 \times 10^{-7}$. I uz značaj $\alpha = 0.05$ da
 Uz izračunati omjer iz danih podataka $0.8564523$.
 Statistički zaključujemo uz značaj 0.05 da varijance nisu jednake. Varijanca starih je veća od varijance mladih. <br>
 
-Sada možemo provesti T-test uz nejednake varijance. Poznavanje varijanci nam određuje broj sloboda i testntu statistiku.
+Sada možemo provesti T-test uz nejednake varijance. Poznavanje varijanci nam određuje broj sloboda i testnu statistiku.
 Budući da smo podatke transformirali logaritmom hipoteze će sada glasiti:
 
-$H_0$: geometrijske sredine starih i mladih su iste.
+$H_0$: srednje vrijednosti mladih i starih su iste.
 
-$H_1$: geometrijske sredine starih i mladih nisu iste.
+$H_1$: srednje vrijednosti mladih i starih nisu iste.
 
 gdje "stari" i "mladi" predstavljaju transformirane podatke.
+
+Srednja vrijednost transformiranih podataka je logaritam po bazi 5 geometrijske sredine originalnih podataka $(x_1x_2...x_n)^{\frac{1}{n}}:$
+
+$\frac{\log_5{x_1} + \log_5{x_2} + ... \log_5{x_n}}{n} = \log_5{(x_1x_2...x_n)^{\frac{1}{n}}}$
+
 ```{r}
 t_test <- t.test(mladi_drogerasi_trans$total_trans, stari_drogerasi_trans$total_trans,
        alternative = "two.sided", var.equal=FALSE)
@@ -497,7 +502,7 @@ model <- glm(Recidivism_Within_3years ~ Race + Gender + Education_Level
              , data = train_sample, family="binomial")
 summary(model)
 ```
-Model koji uzima "Gender", "Race" i "Education_level" kao argumente ima sve parametre osim "Race" značajne (vrijednost P(>|z|) je veća od 0.05).
+Model koji uzima "Gender", "Race" i "Education_level" kao argumente ima sve parametre osim "Race" značajne (vrijednost Pr(>|z|) je veća od 0.05).
 
 ```{r}
 model$coefficients
@@ -515,7 +520,7 @@ accuracy <- mean(predicted.classes == test_sample$Recidivism_Within_3years)
 print(accuracy)
 
 ```
-Preciznost modela je 0.6, što je OK. <br>
+Preciznost modela je 0.6. <br>
 
 Pogledajmo neke predikcije nad pojedincima:
 
@@ -534,9 +539,9 @@ p
 ```
 Za žensku osobu koja ima završeni fakultet, procjenjujemo ~35% šanse da ponovno počini zločin. <br>
 
-Procijena recidivizma pomoću kršenja nadzornih aktivnosti.<br>
+Procjena recidivizma pomoću kršenja nadzornih aktivnosti.<br>
 
-Specifično: "Violations_ElectronicMonitoring", "Violations_Instruction", "Violations_FailToReport", "Violations_MoveWithoutPermission":
+Uzmimo sljedeće: "Violations_ElectronicMonitoring", "Violations_Instruction", "Violations_FailToReport", "Violations_MoveWithoutPermission":
 ```{r}
 model <- glm(Recidivism_Within_3years ~ Violations_ElectronicMonitoring + Violations_Instruction + Violations_FailToReport + Violations_MoveWithoutPermission
              , data = train_sample, family="binomial")
@@ -551,7 +556,7 @@ summary(model)
 ```
 Uočimo da "FailToReport" ne utječe značajno na predikciju i mogli smo ga izostavit.
 
-**Pogledajmo još nekoliko modela logističke regresije:**
+Pogledajmo još nekoliko modela logističke regresije:
 
 Condition_MH_SA, Condition_Cog_Ed, Condition_Other (uvjeti zbog kojeg je zatvorenik pušten na "Parole" ili "Probation"): <br>
 ```{r}
@@ -596,7 +601,16 @@ osoba <- data.frame(Education_Level = "High School Diploma")
 p <- predict(model, osoba, type="response")
 p
 ```
-Procjenjujemo da je vjerojatnost recidivizma za osobu koja ima diplomu srednje škole ~61% veća od vjerojatnosti za osobu koja ima neki fakultet 45%. <br>
+
+Osoba bez završene srednje škole:
+```{r}
+osoba <- data.frame(Education_Level = "Less than HS diploma")
+p <- predict(model, osoba, type="response")
+p
+```
+
+Procjenjujemo da je vjerojatnost recidivizma za osobu koja nema završeni fakultet ~61% veća od vjerojatnosti za osobu koja ima neki završeni neki fakultet 45%. <br>
+
 
 Iznenađujuče najtočniji model od isprobanih dobivamo koristeći "Prior_Arrest_Episodes_PPViolationCharges":
 ```{r}
@@ -654,7 +668,7 @@ ggplot(recidivism_full, aes(x = drugs, fill = Education_Level)) +
   ylab("Count")
 ```
 
-Zbog toga što se većina zatvorenika ne drogira, izdvojit ćemo one koji koriste narkotike i nad njima ćemo provoditi testove.
+Zbog toga što se većina osuđenika ne konzumira narkotike, izdvojit ćemo one koji koriste narkotike i nad njima ćemo provoditi testove.
 Sada postavljavmo pitanje: **Od onih zatvorenika koji konzumiraju narkotike, konzumiraju li istu količinu neovisno o stupnju obrazovanja?**
 Hipoteze ostaju iste
 ```{r}
@@ -703,7 +717,7 @@ ggplot(recidivism_full_filtered, aes(x = boxcox, fill = Education_Level)) +
   xlab("Drugs use") +
   ylab("Count")
 ```
-Distribucije izgledaju puno bolje. Pogledajmo statističkim testom jesu li normalni. <br>
+Distribucije izgledaju normalnije. Pogledajmo statističkim testom jesu li normalni. <br>
 
 ```{r}
 shapiro.test(sample(recidivism_full_filtered$boxcox, size=5000))
@@ -765,7 +779,7 @@ Statistički zaključujemo da podaci nisu normalni.
 qqnorm(residuals)
 qqline(residuals)
 ```
-QQ-plotom vidimo da su podaci "većinom" normalni osim devijacija na desnom repu, stoga je korištenje ANOVA-e opravdano
+QQ-plotom vidimo da su podaci "većinom" normalni osim devijacija na desnom repu, ali ćemo ipak uzeti p-vrijednost ANOVA-e kao valjan rezultat.
 
 Postoji naćin da testiramo iste hipoteze neovisno o distribuciji podataka. Takve metode zovemo neparametarskim i neparametarski ekvivalent jednofaktorskoj ANOVA-i je Kruskal-Wallisov test.
 ```{r}
@@ -774,8 +788,3 @@ print(test)
 ```
 Kruskal-Wallisovim testom opet odbacujemo nultu hipotezu.
 
-Pogledajmo stvarne vrijednosti srednjih vrijednosti:
-```{r}
-means <- aggregate(drugs ~ Education_Level, data = recidivism_full_filtered, mean)
-means
-```
