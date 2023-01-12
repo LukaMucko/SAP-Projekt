@@ -1,7 +1,7 @@
 ---
 title: "Zločin i kazna - analiza kriminala"
 author: Luka Mucko, Filip Pankretić, Matej Lopotar, Tomislav Žiger
-output: pdf_document
+output: html_document
 ---
 ## Motivacija i opis problema
 Recidivizam je jedan od temeljnih pojmova u kaznenom pravosudu koji se odnosi na kriminalno ponašanje
@@ -16,16 +16,15 @@ Učitajmo podatke:
 ```{r warning = FALSE}
 recidivism_full <- read.csv("recidivism_full.csv")
 ```
-```{r include = FALSE}
+
+Učitajmo potrebne pakete:
+```{r, warning = FALSE, message=FALSE}
 library("dplyr")
 library("plyr")
-library("foreach")
 library("corrplot")
-library("scales")
-library("caret")
-require("nortest")
 library("car")
-library("stats")
+library("ggplot2")
+library("bestNormalize")
 ```
 # Postoji li razlika u duljini zatvorske kazne s obzirom na razinu obrazovanja?
 
@@ -458,6 +457,14 @@ p
 Procjenjujemo izrazito veliku vjerojatnost od ~73% za ponovnim recidivizmom ako osoba ima 5 ili više kršenja Parolea.
 
 ## Konzumiraju li zatvorenici istu količinu narkotika neovisno o stupnju obrazovanja
+Postavljamo hipoteze, neka je $\mu_i$ prosječna vrijednost prosjeka testova na droge. Education_Level poprima tri vrijednosti: "At least some college" (i=1), "Less than HS diploma" (i=2), "High School Diploma" (i=3). <br>
+$H_0$: $\mu_1 = \mu_2 = \mu_3$ <br>
+$H_1$: barem dva $\mu$ nisu jednaka.
+
+Za ovakvo postavljene hipoteze nije prikladno koristiti t-test 3 puta zbog nakupljanja greške prve vrste. Stoga, metoda koju ćemo koristiti jest ANOVA (Analysis of Variance). <br>
+ANOVA se provodi uz pretpostavku normalnosti distribucije reziduala i da su varijance među grupama (stupanj obrazovanja) iste. <br>
+
+Uzmimo prosjek testova za droge i spremimo rezultat u stupac "drugs".
 ```{r}
 recidivism_full <- recidivism_full %>%
   mutate(drugs = (DrugTests_THC_Positive + DrugTests_Cocaine_Positive +
@@ -466,35 +473,125 @@ recidivism_full <- recidivism_full %>%
 
 
 ```{r}
-library(ggplot2)
 ggplot(data = recidivism_full, aes(x = Education_Level, y = drugs)) +
   geom_boxplot() +
   ggtitle("Boxplots of 'drugs' by 'Education_Level'")
 
 ```
+Iz box-plota bismo mogli naslutiti da bi zatvorenici sa manjim stupnjom obrazovanja mogli konzumirati više droga. Pogledajmo srednje vrijednosti: <br>
 
 ```{r}
-bartlett.test(drugs ~ Education_Level, data=recidivism_full)
+ggplot(recidivism_full, aes(x = drugs, fill = Education_Level)) +
+  geom_histogram(position = "dodge", alpha = 0.5) +
+  ggtitle("Histograms of drugs use by Education Level") +
+  xlab("Drugs use") +
+  ylab("Count")
+
 ```
 
+**Zbog toga što se većina zatvorenika ne drogira, izdvojit ćemo one koji koriste narkotike i nad njima ćemo provoditi testove.**
+Sada postavljavmo pitanje: **Od onih zatvorenika koji konzumiraju narkotike, konzumiraju li istu količinu neovisno o stupnju obrazovanja?**
+Hipoteze ostaju iste
+```{r}
+recidivism_full_filtered <- subset(recidivism_full, drugs > 0)
+```
+
+Pogledajmo srednje vrijednosti testova na droge među populacijom koja ima "drugs" > 0.
+```{r}
+ggplot(data = recidivism_full_filtered, aes(x = Education_Level, y = drugs)) +
+  geom_boxplot() +
+  ggtitle("Boxplots of 'drugs' by 'Education_Level'")
+
+```
+
+Jesu li podaci normalni?
+```{r}
+ggplot(recidivism_full_filtered, aes(x = drugs, fill = Education_Level)) +
+  geom_histogram(position = "dodge", alpha = 0.5) +
+  ggtitle("Histograms of drugs use by Education Level") +
+  xlab("Drugs use") +
+  ylab("Count")
+```
+ANOVA ne zahtijeva normalnu distribuciju podataka, samo reziduala, ali ćemo ipak transformirati podatke Box-Cox transformacijom:
+Box-Cox transformacija maximum likelihood estimacijom pronalazi $\lambda$ i transformira podatke na sljedeći naćin: <br>
+$g(x;\lambda = 0) = \log x$ <br>
+$g(x;\lambda \neq 0) = \frac{x^{\lambda} - 1}{\lambda}$ <br>
+
 
 ```{r}
-recidivism_full <- recidivism_full %>%
-  mutate(drugs = (DrugTests_THC_Positive + DrugTests_Cocaine_Positive +
-                DrugTests_Meth_Positive + DrugTests_Other_Positive)/4)
-recidivism_full$Education_Level <- as.factor(recidivism_full$Education_Level)
+recidivism_full_filtered$boxcox <- bestNormalize::boxcox(recidivism_full_filtered$drugs)$x.t
+recidivism_full_filtered <- subset(recidivism_full_filtered, select=c("Education_Level","boxcox"))
+```
 
-model <- aov(drugs ~ Education_Level, data = recidivism_full)
+```{r}
+ggplot(recidivism_full_filtered, aes(x = boxcox, fill = Education_Level)) +
+  geom_histogram(position = "dodge", alpha = 0.5) +
+  ggtitle("Histograms of drugs use by Education Level, transformed") +
+  xlab("Drugs use") +
+  ylab("Count")
+```
+Distribucije izgledaju puno bolje. Pogledajmo statističkim testom jesu li normalni. <br>
+
+```{r}
+shapiro.test(sample(recidivism_full_filtered$boxcox, size=5000, replace=TRUE))
+```
+
+Pogledajmo srednje vrijednosti:
+```{r}
+srednje_vrij <- aggregate(boxcox ~ Education_Level, data = recidivism_full_filtered, mean)
+srednje_vrij
+```
+
+Prije provedbe ANOVA-e moramo pokazati da su varijance jednake. <br>
+```{r}
+varijance <- aggregate(boxcox ~ Education_Level, data = recidivism_full_filtered, var)
+varijance
+```
+Vidimo da su varijance otprilike iste. Približno jednake 1.<br>
+
+Provedimo statistički test koji testira hipoteze:
+$H_0$: varijance su jednake. <br>
+$H_1$: barem dvije varijance nisu jednake.
+Tu ćemo se pozvati na Bartlettov test o jednakosti varijanci:
+```{r}
+bartlett.test(boxcox ~ Education_Level, data=recidivism_full_filtered)
+```
+Zbog velike p-vrijednosti ne odbacujemo nultu hipotezu uz značaj 0.05 i statistički zaključujemo da su varijance među podacima jednake.
+
+Provedimo ANOVA-u.
+```{r}
+
+model <- aov(boxcox ~ Education_Level, data = recidivism_full_filtered)
 summary(model)
 ```
+p-vrijednost ANOVA-e jest manja od $2\dot 10^{-16}$.
+**Stoga statistički zaključujemo uz značaj 0.05 da se među zatvorenicima koji konzumiraju narkotike (prosjek veći od 0) prosječna vrijednost pozitivnih testova na droge nije jednaka za svaki stupanj obrazovanja**
 
+ANOVA zahtijeva normalnu distribucija reziduala.
 ```{r}
-oneway.test(drugs ~ Education_Level, data = recidivism_full, var.equal = FALSE)
+residuals <- model$residuals
+ggplot(data = data.frame(residuals), aes(x = residuals)) +
+  geom_histogram(fill = "blue", alpha = 0.5) +
+  ggtitle("Histogram of Residuals") +
+  xlab("Residuals") +
+  ylab("Count")
+```
+Podaci izgledaju normalno.
+
+Provedimo statistički test za normalnost.
+```{r}
+shapiro.test(sample(residuals, size=5000, replace=TRUE))
 ```
 
-
 ```{r}
-test <- kruskal.test(drugs ~ Education_Level, data = recidivism_full)
+qqnorm(residuals)
+qqline(residuals)
+```
+QQ-plotom vidimo da su podaci "većinom" normalni osim devijacija na desnom repu.
+
+Postoji naćin da testiramo iste hipoteze neovisno o distribuciji podataka. Takve metode zovemo neparametarskim i neparametarski ekvivalent jednofaktorskoj ANOVA-i je Kruskal-Wallisov test.
+```{r}
+test <- kruskal.test(boxcox ~ Education_Level, data = recidivism_full_filtered)
 print(test)
 ```
-
+Kruskal-Wallisovim testom opet potvrđujemo zaključak od maloprije.
