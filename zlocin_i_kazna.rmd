@@ -791,10 +791,13 @@ $H_0$: Medijani populacija su isti
 
 $H_1$: Medijani populacija nisu isti
 
-Provedimo Kruskal-Wallisov test na ne transformiranim podacima:
+Provedimo Kruskal-Wallisov test na originalnim podacima:
 ```{r}
 test <- kruskal.test(drugs ~ Education_Level, data = recidivism_full_filtered)
 print(test)
 ```
 Kruskal-Wallisovim testom opet odbacujemo nultu hipotezu.
 
+
+
+# Zaključak
