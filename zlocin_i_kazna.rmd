@@ -785,14 +785,14 @@ QQ-plotom vidimo da su podaci "većinom" normalni osim devijacija na desnom repu
 Što ako nemamo normalnu distribuciju reziduala i/ili varijance nisu jednake.
 
 Postoji naćin da testiramo iste hipoteze neovisno o distribuciji podataka. Takve metode zovemo neparametarskim i neparametarski ekvivalent jednofaktorskoj anovi je Kruskal-Wallisov test.
-hipoteze kod Kruskal-Wallisovog testa su:
+Kruskal-Wallisov test zahtijeva da podaci dolaze iz iste distribucije, a hipoteze su mu:
 
 $H_0$: Medijani populacija su isti
 
-$H_1$: Barem dva medijana nisu ista
+$H_1$: Medijani populacija nisu isti
 ```{r}
-test <- kruskal.test(drugs ~ Education_Level, data = recidivism_full_filtered)
+test <- kruskal.test(boxcox ~ Education_Level, data = recidivism_full_filtered)
 print(test)
 ```
-Kruskal-Wallisovim testom opet odbacujemo nultu hipotezu zbog male p-vrijednosti.
+Kruskal-Wallisovim testom opet odbacujemo nultu hipotezu.
 
