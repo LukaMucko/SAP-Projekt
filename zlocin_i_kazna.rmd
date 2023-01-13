@@ -80,7 +80,7 @@ Pearsonov rezidual jest razlika dobivene i uočene vrijednosti normirane po kori
 
 $r_{ij} = \frac{o_{ij} - e_{ij}}{\sqrt{e_{ij}}}$, kvadrati residuala doprinose vrijednosti testne statistike i time smanjuju p-vrijednost. Zato možemo reći sljedeće: <br>
 
-Kada je $r_{ij}$ > 0 kažemo da postoji pozitivna asocijacija između retka i stupca jer je više uočeno nego očekivano, a dok je $r_{ij}$ < 0 onda kažemo postoji negativna asocijacija jer je manje uočeno nego očekivano. <br>
+Kada je $r_{ij}$ > 0 kažemo da postoji pozitivna asocijacija između retka i stupca jer je više uočeno nego očekivano, a dok je $r_{ij}$ < 0 onda kažemo postoji negativna asocijacija jer je manje uočeno nego očekivano. (sve ocjene asocijacije u ovom projektu su relativne i procjenjene prema veličini i boji kruga u corrplotovima, postoje testovi koji mjere asocijaciju između kategorijskih varijabli npr. Cramerovo V i slično) <br>
 
 Plava boja predstavlja pozitivnu asocijaciju između retka i stupca. Uočimo da postoji pozitivna asocijacija ljudi sa završenim fakultetom i više od 3 godine kazne. Također postoji negativna asocijacija s ljudima sa završenim fakultetom i kaznom od 1-2 godine. <br>
 
@@ -463,7 +463,8 @@ geometrijska sredina starih:
 5^(-2.037292)
 ```
 
-Razlike u aritmetičkoj sredini transformiranih podataka implicira razliku u aritmetičkoj sredini izvornih podataka. Stoga možemo statistički zaključiti da aritmetičke sredine među mladim osuđenicima koji koriste narkotike nije ista kao kod starih.
+Iako ne možemo uspoređivati aritmetičke sredine log-transformiranih podataka i originalnih, ali zbog izrazito male p-vrijednosti možemo reći da postoji razlika između aritmetičke sredine
+mladih i starih tj. odbacujemo nultu hipotezu i prihvaćamo alternativnu.
 
 Budući da je broj uzoraka izrazito velik, još jednom ćemo se uzdat u robusnost T-testa te ga provesti na netransformiranim podacima.
 
@@ -478,6 +479,11 @@ t.test(mladi_drogerasi$total, stari_drogerasi$total, var.equal = TRUE)
 ```
 Ponovno odbacujemo nultu hipotezu o jednakosti srednjih vrijednosti.
 
+Provedimo još jednom t-test na netransformiranim podaci da vidimo tko ima veću srednju vrijednost. Pretpostavit ćemo da mladi imaju veći.
+```{r}
+t.test(mladi_drogerasi$total, stari_drogerasi$total, var.equal=TRUE, alternative = "less")
+```
+Vidimo da uz p-vrijednost 1 prihvaćamo alternativu "less" tj. razlika između srednje vrijednosti mladih i starih je manje od 0. Mladi osuđenici koji konzumiraju narkotike konzumiraju više.
 
 # Možemo li na temelju dostupnih varijabli odrediti hoće li doći do ponavljanja kriminalnog ponašanja?
 
@@ -504,10 +510,6 @@ summary(model)
 ```
 Model koji uzima "Gender", "Race" i "Education_level" kao argumente ima sve parametre osim "Race" značajne (vrijednost Pr(>|z|) je veća od 0.05).
 
-```{r}
-model$coefficients
-```
-Vidimo da je vrijednost $\beta$ uz RaceWHITE -0.0431 što je vrlo malo i možemo izostaviti "Race" kao argument u modelu. (glm() stvara k-1 "dummy" varijable za svaku varijablu s k kategorija zadanu u prvom argumentu funkcije glm().To radi kako bi mogao koristiti kategorijske podatke za regresiju, jer "High School Diploma"*0.59079413 nema smisla) <br>
 
 Pogledajmo koliko dobro model procjenjuje je li je došlo do recividizma za neku osobu opisanom samo s "Gender" i "Education_Level".
 
@@ -623,12 +625,7 @@ print(accuracy)
 ```
 
 ```{r}
-model$coefficients
-```
-Vidimo da osoba koja ima što više kršenja Parolea prije osude ima veću šansu da ponovni recidivizam.
-
-```{r}
-osoba <- data.frame(Prior_Arrest_Episodes_PPViolationCharges ="5 or more")
+osoba <- data.frame(Prior_Arrest_Episodes_PPViolationCharges ="0")
 p<- predict(model, osoba,type="response" )
 p
 ```
@@ -642,7 +639,7 @@ $H_0$: $\mu_1 = \mu_2 = \mu_3$ <br>
 $H_1$: barem dva $\mu$ nisu jednaka.
 
 Za ovakvo postavljene hipoteze nije prikladno koristiti t-test 3 puta zbog nakupljanja greške prve vrste. Stoga, metoda koju ćemo koristiti jest ANOVA (Analysis of Variance). <br>
-ANOVA se provodi uz pretpostavku normalnosti distribucije reziduala, da su varijance među grupama (stupanj obrazovanja) iste i nezavisnost grupa. <br>
+ANOVA se provodi uz pretpostavku normalnosti distribucije reziduala, da su varijance među grupama (stupanj obrazovanja) iste i da su podaci među grupama nezavisni. <br>
 
 Uzmimo prosjek testova za droge i spremimo rezultat u stupac "drugs".
 ```{r}
@@ -675,7 +672,6 @@ Hipoteze ostaju iste
 recidivism_full_filtered <- subset(recidivism_full, drugs > 0)
 ```
 
-Pogledajmo srednje vrijednosti testova na droge među populacijom koja ima "drugs" > 0.
 ```{r}
 ggplot(data = recidivism_full_filtered, aes(x = Education_Level, y = drugs)) +
   geom_boxplot() +
@@ -702,11 +698,13 @@ ANOVA ne zahtijeva normalnu distribuciju podataka, samo reziduala, ali ćemo ipa
 Box-Cox transformacija maximum likelihood estimacijom pronalazi $\lambda$ i transformira podatke na sljedeći naćin: <br>
 
 $g(x;\lambda = 0) = \log x$ <br>
+
 $g(x;\lambda \neq 0) = \frac{x^{\lambda} - 1}{\lambda}$ <br>
 
 
 ```{r}
-recidivism_full_filtered <- recidivism_full_filtered %>% subset(select=c("Education_Level","drugs")) %>% na.omit()
+recidivism_full_filtered <-
+        recidivism_full_filtered %>% subset(select=c("Education_Level","drugs")) %>% na.omit()
 recidivism_full_filtered$boxcox <- bestNormalize::boxcox(recidivism_full_filtered$drugs)$x.t
 ```
 
@@ -722,6 +720,7 @@ Distribucije izgledaju normalnije. Pogledajmo statističkim testom jesu li norma
 ```{r}
 shapiro.test(sample(recidivism_full_filtered$boxcox, size=5000))
 ```
+p-vrijednost je izrazito mala i ne možemo reći da su podaci normalno distribuirani, ali ćemo ipak provesti test zbog velikog uzorka.
 
 Pogledajmo srednje vrijednosti:
 ```{r}
@@ -754,9 +753,9 @@ Provedimo ANOVA-u.
 model <- aov(boxcox ~ Education_Level, data = recidivism_full_filtered)
 summary(model)
 ```
-p-vrijednost ANOVA-e jest manja od $2\dot 10^{-16}$.
+p-vrijednost ANOVA-e jest manja od $2 \times 10^{-16}$.
 
-**Stoga statistički zaključujemo uz značaj 0.05 da se među zatvorenicima koji konzumiraju narkotike (prosjek veći od 0) prosječna vrijednost pozitivnih testova na droge nije jednaka za svaki stupanj obrazovanja**
+**Stoga statistički zaključujemo uz značaj 0.05 da se među zatvorenicima koji konzumiraju narkotike prosječna vrijednost pozitivnih testova na droge nije jednaka za svaki stupanj obrazovanja**
 
 ANOVA zahtijeva normalnu distribucija reziduala.
 ```{r}
@@ -773,18 +772,27 @@ Provedimo statistički test za normalnost.
 ```{r}
 shapiro.test(sample(residuals, size=5000))
 ```
-Statistički zaključujemo da podaci nisu normalni.
+Statistički zaključujemo da podaci nisu normalni, iako distribucija nalikuje normalnoj.
 
+Pogledajmo QQ-plot.
 ```{r}
 qqnorm(residuals)
 qqline(residuals)
 ```
-QQ-plotom vidimo da su podaci "većinom" normalni osim devijacija na desnom repu, ali ćemo ipak uzeti p-vrijednost ANOVA-e kao valjan rezultat.
+QQ-plotom vidimo da su podaci "većinom" normalni osim devijacija na desnom repu, ali ćemo ipak uzeti p-vrijednost ANOVA-e kao valjan rezultat zbog velikog uzorka.
 
-Postoji naćin da testiramo iste hipoteze neovisno o distribuciji podataka. Takve metode zovemo neparametarskim i neparametarski ekvivalent jednofaktorskoj ANOVA-i je Kruskal-Wallisov test.
+
+Što ako nemamo normalnu distribuciju reziduala i/ili varijance nisu jednake.
+
+Postoji naćin da testiramo iste hipoteze neovisno o distribuciji podataka. Takve metode zovemo neparametarskim i neparametarski ekvivalent jednofaktorskoj anovi je Kruskal-Wallisov test.
+hipoteze kod Kruskal-Wallisovog testa su:
+
+$H_0$: Medijani populacija su isti
+
+$H_1$: Barem dva medijana nisu ista
 ```{r}
-test <- kruskal.test(boxcox ~ Education_Level, data = recidivism_full_filtered)
+test <- kruskal.test(drugs ~ Education_Level, data = recidivism_full_filtered)
 print(test)
 ```
-Kruskal-Wallisovim testom opet odbacujemo nultu hipotezu.
+Kruskal-Wallisovim testom opet odbacujemo nultu hipotezu zbog male p-vrijednosti.
 
