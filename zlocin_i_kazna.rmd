@@ -117,7 +117,8 @@ ponovljeni_mladi <- nrow(subset(recidivism_full,
                                 Age_at_Release %in% c("18-22","23-27","28-32")
                                         & Recidivism_Within_3years))
 ponovljeni_stari <- nrow(subset(recidivism_full,
-                                Age_at_Release %in% c("33-37","38-42","43-47","48 or older") & Recidivism_Within_3years))
+                                Age_at_Release %in% c("33-37","38-42","43-47","48 or older")
+                                        & Recidivism_Within_3years))
 cat("Broj mladih/starih koji su ponovili zločin:",ponovljeni_mladi,ponovljeni_stari)
 
 ```
@@ -332,14 +333,18 @@ Izdvojimo stare i mlade "drogeraše". Oni koji ne konzumiraju narkotike definira
 
 ```{r}
 stari_drogerasi <- recidivism_full %>%
-  select(DrugTests_THC_Positive, DrugTests_Meth_Positive, DrugTests_Cocaine_Positive, DrugTests_Other_Positive, Age_at_Release) %>%
-  filter((DrugTests_THC_Positive!=0 | DrugTests_Meth_Positive!=0 | DrugTests_Cocaine_Positive!=0 | DrugTests_Cocaine_Positive!=0) & Age_at_Release %in% c("33-37","38-42","43-47","48 or older") ) %>%
-  filter(rowSums(.[,1:4]) > 0) %>% na.omit()
+  select(DrugTests_THC_Positive, DrugTests_Meth_Positive, DrugTests_Cocaine_Positive,
+         DrugTests_Other_Positive, Age_at_Release) %>%
+  filter((DrugTests_THC_Positive!=0 | DrugTests_Meth_Positive!=0 | DrugTests_Cocaine_Positive!=0
+          | DrugTests_Cocaine_Positive!=0) & Age_at_Release %in% c("33-37","38-42","43-47","48 or older")
+  )%>% filter(rowSums(.[,1:4]) > 0) %>% na.omit()
 
 mladi_drogerasi <- recidivism_full %>%
-  select(DrugTests_THC_Positive, DrugTests_Meth_Positive, DrugTests_Cocaine_Positive, DrugTests_Other_Positive, Age_at_Release) %>%
-  filter((DrugTests_THC_Positive!=0 | DrugTests_Meth_Positive!=0 | DrugTests_Cocaine_Positive!=0 | DrugTests_Cocaine_Positive!=0) & Age_at_Release %in% c("18-22","23-27","28-32") ) %>%
-  filter(rowSums(.[,1:4]) > 0) %>% na.omit()
+  select(DrugTests_THC_Positive, DrugTests_Meth_Positive, DrugTests_Cocaine_Positive,
+         DrugTests_Other_Positive, Age_at_Release) %>%
+  filter((DrugTests_THC_Positive!=0 | DrugTests_Meth_Positive!=0 | DrugTests_Cocaine_Positive!=0
+          | DrugTests_Cocaine_Positive!=0) & Age_at_Release %in% c("18-22","23-27","28-32")
+  ) %>% filter(rowSums(.[,1:4]) > 0) %>% na.omit()
 
 summary(stari_drogerasi)
 summary(mladi_drogerasi)
@@ -349,11 +354,13 @@ Pronađimo prosjek testova na narkotike i spremimo vrijednost u stupac total:
 ```{r}
 stari_drogerasi <- stari_drogerasi %>%
   mutate(total = rowSums(.[1:4])/4) %>%
-  select(-DrugTests_THC_Positive,-DrugTests_Meth_Positive,-DrugTests_Cocaine_Positive,-DrugTests_Other_Positive) %>% na.omit()
+  select(-DrugTests_THC_Positive,-DrugTests_Meth_Positive,
+         -DrugTests_Cocaine_Positive,-DrugTests_Other_Positive) %>% na.omit()
 
 mladi_drogerasi <- mladi_drogerasi %>%
   mutate(total = rowSums(.[1:4])/4) %>%
-  select(-DrugTests_THC_Positive,-DrugTests_Meth_Positive,-DrugTests_Cocaine_Positive,-DrugTests_Other_Positive) %>% na.omit()
+  select(-DrugTests_THC_Positive,-DrugTests_Meth_Positive,
+         -DrugTests_Cocaine_Positive,-DrugTests_Other_Positive) %>% na.omit()
 ```
 
 
@@ -377,10 +384,12 @@ mladi_drogerasi_trans <- mladi_drogerasi %>%
         mutate(total_trans = log(total, base=5))
 
 ggplot() +
-  geom_histogram(data = mladi_drogerasi_trans, aes(x = total_trans), fill = "blue", alpha = 0.5) +
-  geom_histogram(data = stari_drogerasi_trans, aes(x = total_trans), fill = "red", alpha = 0.5) +
-  ggtitle("Histogram of 'total' column in mladi_drogerasi_trans and stari_drogerasi_trans") +
-  xlab("Total") +
+  geom_histogram(data = mladi_drogerasi_trans, aes(x = total_trans), fill = "blue",
+                 alpha = 0.5) +
+  geom_histogram(data = stari_drogerasi_trans, aes(x = total_trans), fill = "red",
+                 alpha = 0.5) +
+  ggtitle("Histogram of 'total' column in mladi_drogerasi_trans and stari_drogerasi_trans")
++ xlab("Total") +
   ylab("Count")
 
 ```
@@ -564,7 +573,8 @@ Procjena recidivizma pomoću kršenja nadzornih aktivnosti.<br>
 
 Uzmimo sljedeće: "Violations_ElectronicMonitoring", "Violations_Instruction", "Violations_FailToReport", "Violations_MoveWithoutPermission":
 ```{r}
-model <- glm(Recidivism_Within_3years ~ Violations_ElectronicMonitoring + Violations_Instruction + Violations_FailToReport + Violations_MoveWithoutPermission
+model <- glm(Recidivism_Within_3years ~ Violations_ElectronicMonitoring
+        + Violations_Instruction + Violations_FailToReport + Violations_MoveWithoutPermission
              , data = train_sample, family="binomial")
 probabilities <- predict(model, newdata = test_sample, type="response")
 predicted.classes <- ifelse(probabilities > 0.5, TRUE, FALSE)
