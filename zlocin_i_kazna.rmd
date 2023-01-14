@@ -11,8 +11,8 @@ osobe na slobodu. Zbog opće sigurnosti, a i razvoja novih strategija za reinteg
 je proučiti i razumjeti koji čimbenici su učestaliji kod ponavljača zločina.
 <br>
 **Prvo ćemo odgovoriti na zadana pitanja, zatim ispitivati vlastite hipoteze.** <br>
-Učitajmo podatke:
 
+Učitajmo podatke:
 ```{r warning = FALSE}
 recidivism_full <- read.csv("recidivism_full.csv")
 ```
@@ -167,7 +167,7 @@ recidivism_full$OtherUsage <- cut(recidivism_full$DrugTests_Other_Positive,
                                     labels=c("Rijetko","Često","Vrlo Često"))
 ```
 
-Sada možemo provesti ukupno 4*8= 32 testa. <br>
+Sada možemo provesti ukupno 4*8= 32 testa. Koristimo simulate.p.value = TRUE što Monte Carlo simulacijom simulira p-vrijednost, to koristimo jer neke očekivane vrijednosti nisu veće od 5.<br>
 
 ```{r}
 narkotici<- c("MethUsage","CocaineUsage","THCUsage","OtherUsage")
@@ -185,14 +185,16 @@ colnames(chisq_tests)<- narkotici
 
 for (narcotic in narkotici){
   for (crime in zlocin) {
-    chisq <- chisq.test(table(recidivism_full[,narcotic],recidivism_full[, crime]),simulate.p.value = TRUE)
+    chisq <- chisq.test(table(recidivism_full[,narcotic],recidivism_full[, crime]),
+                        simulate.p.value = TRUE)
     chisq_tests[crime,narcotic]<-chisq$p.value
   }
 }
 ```
 
 ```{r}
-row.names(chisq_tests)<-c("GunCharges","Drug","Violent","Felony","PPViolationCharges","Misdemeanor","DomesticViolence","Property")
+row.names(chisq_tests)<-c("GunCharges","Drug","Violent","Felony",
+                          "PPViolationCharges","Misdemeanor","DomesticViolence","Property")
 chisq_tests
 ```
 Tablica iznad sadrži p-vrijednosti $\chi^{2}$ testa. Za One kombinacije za koje je p vrijednost manja od 0.05 odbacujemo nultu hipotezu o nezavisnosti kriminala i korištenog narkotika i prihvaćamo alternativu. <br>
@@ -202,7 +204,8 @@ Pogledajmo rezultat s najmanjom p-vrijednosti: <br>
 Broj počinjenog kriminala koji spada u "misdemeanor" nije neovisan o korištenju THC-a. <br>
 
 ```{r}
-chisq<-chisq.test(recidivism_full$Prior_Conviction_Episodes_Misd, recidivism_full$THCUsage,simulate.p.value = TRUE)
+chisq<-chisq.test(recidivism_full$Prior_Conviction_Episodes_Misd, recidivism_full$THCUsage,
+                  simulate.p.value = TRUE)
 chisq
 ```
 
@@ -221,7 +224,7 @@ chisq$observed
 corrplot(chisq$residuals, is.corr = FALSE)
 ```
 
-Plavo označava da više zatvorenika od očekivanog koji često konzumiraju THC osuđeno zbog misdemeanora (vandalizam, pijana, posjedovanje droge!). Tj. da postoji pozitivna povezanost između nasilja i konzumiranja THC-a. <br>
+Plavo označava da više zatvorenika od očekivanog koji često konzumiraju THC osuđeno zbog misdemeanora (vandalizam, vožnje pod utjecajem alkohola, posjedovanje droge! i sl.). Tj. da postoji pozitivna povezanost između nasilja i konzumiranja THC-a. <br>
 
 
 Ako ćemo gledati samo zloćine zbog kojih su osuđenici zatvoreni, tada koristimo stupac "Prison_Offense" koji poprima 5 vrijednosti: Violent/Sex, Violent/Non-Sex,
@@ -267,13 +270,13 @@ Pogledajmo reziduale za kokain i thc gdje odbacujemo nultu hipotezu i prihvaćam
 corrplot(cocaine_test$residuals, is.corr=FALSE)
 ```
 
-Uočavamo da postoji povezanost između "property" kriminala i čestog i vrlo čestog korištenja kokaina.
+Uočavamo da postoji povezanost između "property" kriminala, čestog i vrlo čestog korištenja kokaina.
 
 ```{r}
 corrplot(thc_test$residuals, is.corr=FALSE)
 ```
 
-Vidimo da postoji pozitivna povezanost između "property" kriminala i korištenja THC-a. Također vidimo da ne postoji pozitivna povezanost između "Violent/Sex" i korištenja THC-a, isto tako za "Drug" kriminal.
+Vidimo da postoji pozitivna povezanost između "property" kriminala i korištenja THC-a. Također vidimo da negativna povezanost između "Violent/Sex" i korištenja THC-a, isto tako za "Drug" kriminal.
 
 # Jesu li mladi osuđenici skloniji drogama?
 
@@ -299,6 +302,10 @@ cat("Broj mladih/starih koji su skloni drogama:",mladi_droge,stari_droge)
 
 Vidimo da veći broj mlađih zatvorenika koristi drogu iako ih je manje od starijih u tablici
 
+$H_0$: $p_{\text{mladi}} = p_{\text{stari}}$
+
+$H_1$: $p_{\text{mladi}} \neq p_{\text{stari}}$
+
 ```{r}
 Dm <- mladi_droge/mladi
 Ds <- stari_droge/stari
@@ -316,9 +323,9 @@ Provedimo T-test za usporedbu očekivanih vrijednosti iz normalne distribucije. 
 
 $H_0:$ $\mu_{\text{mladi}} = \mu_{\text{stari}}$ <br>
 
-$H_1:$ očekivane vrijednosti nisu iste. <br>
+$H_1:$ $\mu_{\text{mladi}} \neq \mu_{\text{stari}}$ <br>
 
-$\mu$ označavaju očekivanu prosjeka rezultata iz testova droge, stupci DrugTests_Cocaine_Positive ...<br>
+$\mu$ označavaju očekivanu prosjeka rezultata iz testova droge, stupci DrugTests_Cocaine_Positive i sl.<br>
 <br>
 
 Izdvojimo stare i mlade "drogeraše". Oni koji ne konzumiraju narkotike definiramo tako da imaju svaki test na drogu = 0. <br>
@@ -327,12 +334,12 @@ Izdvojimo stare i mlade "drogeraše". Oni koji ne konzumiraju narkotike definira
 stari_drogerasi <- recidivism_full %>%
   select(DrugTests_THC_Positive, DrugTests_Meth_Positive, DrugTests_Cocaine_Positive, DrugTests_Other_Positive, Age_at_Release) %>%
   filter((DrugTests_THC_Positive!=0 | DrugTests_Meth_Positive!=0 | DrugTests_Cocaine_Positive!=0 | DrugTests_Cocaine_Positive!=0) & Age_at_Release %in% c("33-37","38-42","43-47","48 or older") ) %>%
-  filter(rowSums(.[,1:4]) >= 0) %>% na.omit()
+  filter(rowSums(.[,1:4]) > 0) %>% na.omit()
 
 mladi_drogerasi <- recidivism_full %>%
   select(DrugTests_THC_Positive, DrugTests_Meth_Positive, DrugTests_Cocaine_Positive, DrugTests_Other_Positive, Age_at_Release) %>%
   filter((DrugTests_THC_Positive!=0 | DrugTests_Meth_Positive!=0 | DrugTests_Cocaine_Positive!=0 | DrugTests_Cocaine_Positive!=0) & Age_at_Release %in% c("18-22","23-27","28-32") ) %>%
-  filter(rowSums(.[,1:4]) >= 0) %>% na.omit()
+  filter(rowSums(.[,1:4]) > 0) %>% na.omit()
 
 summary(stari_drogerasi)
 summary(mladi_drogerasi)
@@ -342,14 +349,11 @@ Pronađimo prosjek testova na narkotike i spremimo vrijednost u stupac total:
 ```{r}
 stari_drogerasi <- stari_drogerasi %>%
   mutate(total = rowSums(.[1:4])/4) %>%
-  select(-DrugTests_THC_Positive,-DrugTests_Meth_Positive,-DrugTests_Cocaine_Positive,-DrugTests_Other_Positive)
+  select(-DrugTests_THC_Positive,-DrugTests_Meth_Positive,-DrugTests_Cocaine_Positive,-DrugTests_Other_Positive) %>% na.omit()
 
 mladi_drogerasi <- mladi_drogerasi %>%
   mutate(total = rowSums(.[1:4])/4) %>%
-  select(-DrugTests_THC_Positive,-DrugTests_Meth_Positive,-DrugTests_Cocaine_Positive,-DrugTests_Other_Positive)
-
-var_mladi <- var(mladi_drogerasi)
-var_stari <- var(stari_drogerasi)
+  select(-DrugTests_THC_Positive,-DrugTests_Meth_Positive,-DrugTests_Cocaine_Positive,-DrugTests_Other_Positive) %>% na.omit()
 ```
 
 
@@ -400,7 +404,7 @@ Vidimo da je distribucija "stari_drogerasi_trans" nije sasvim normalna zbog devi
 qqnorm(mladi_drogerasi_trans$total_trans)
 qqline(mladi_drogerasi_trans$total_trans)
 ```
-Zbog značanjih devijacija od pravca ne možemo reći da su podaci normalno distribuirani. <br>
+Zbog značajnijih devijacija od pravca ne možemo reći da su podaci normalno distribuirani. <br>
 
 Pogledajmo konkretne p-vrijednosti Shapiro-Wilkovog testa normalnosti.
 ```{r}
@@ -427,7 +431,8 @@ $H_1$: $\sigma_{mladi}^{2} \neq \sigma_{stari}^{2}$
 
 nad log-transformiranim podacima
 ```{r}
-var.test(mladi_drogerasi_trans$total_trans,stari_drogerasi_trans$total_trans, alternative = "two.sided")
+var.test(mladi_drogerasi_trans$total_trans,stari_drogerasi_trans$total_trans,
+         alternative = "two.sided")
 ```
 F-test daje p-vrijednost $7.067 \times 10^{-7}$. I uz značaj $\alpha = 0.05$ daje 95%-tni interval pouzdanosti za omjer varijanci. $[0.8053216, 0.9106068]$ <br>
 Uz izračunati omjer iz danih podataka $0.8564523$.
@@ -477,13 +482,27 @@ Statistički zaključujemo da su varijance jednake.
 ```{r}
 t.test(mladi_drogerasi$total, stari_drogerasi$total, var.equal = TRUE)
 ```
-Ponovno odbacujemo nultu hipotezu o jednakosti srednjih vrijednosti.
+Ponovno odbacujemo nultu hipotezu o jednakosti srednjih vrijednosti i prihvaćamo alternativu.
 
 Provedimo još jednom t-test na netransformiranim podaci da vidimo tko ima veću srednju vrijednost. Pretpostavit ćemo da mladi imaju veći.
 ```{r}
-t.test(mladi_drogerasi$total, stari_drogerasi$total, var.equal=TRUE, alternative = "less")
+t.test(mladi_drogerasi$total, stari_drogerasi$total, var.equal=TRUE, alternative = "greater")
 ```
-Vidimo da uz p-vrijednost 1 prihvaćamo alternativu "less" tj. razlika između srednje vrijednosti mladih i starih je manje od 0. Mladi osuđenici koji konzumiraju narkotike konzumiraju više.
+Vidimo da uz malu p-vrijednost prihvaćamo alternativu "greater" tj. razlika između srednje vrijednosti mladih i starih je veća od 0. Mladi osuđenici koji konzumiraju narkotike konzumiraju više.
+
+kada su distribucije populacija nepoznate ili kada zahtjevi nekog parametarskog testa nisu zadovoljeni koristimo neparametarske testove.
+Neparametarska alternativa t-testu je Mann-Whitney-Wilcoxonov test. Neparametarski testovi se koriste kada su distribucije populacija nepoznate ili kada zahtjevi parametarskog testa nisu zadovoljeni.
+
+Za MWW test formiramo hipoteze:
+
+$H_0$: Medijan mlađih = Medijan starih
+
+$H_1$: Medijan mlađih $>$ Medijan starih
+
+```{r}
+wilcox.test(mladi_drogerasi$total, stari_drogerasi$total, alternative = "greater")
+```
+Ovdje zbog male p-vrijednosti odbacujemo nultu hipotezu o jednakosti medijana i prihvaćamo alternativu. Medijan mladih je veći od medijana starih.
 
 # Možemo li na temelju dostupnih varijabli odrediti hoće li doći do ponavljanja kriminalnog ponašanja?
 
@@ -493,7 +512,7 @@ Pokušat ćemo regresijom naći model koji će dovoljno dobro procjeniti vrijedn
 
 Logistička regresija transformira model linearne regresije $x^T \beta$ sigmoidalnom funkcijom $f(x) = \frac{1}{1-e^{-x}}$. <br>
 
-Time dobivamo funkciju $p(x) = f(x^T \mathbf{\beta})$ koja daje vrijednosti između $[0, 1]$. Budući da trebamo binarne vrijednosti "TRUE" i "FALSE" za $x_i$ koji daju $p>0.5$ označit ćemo s "TRUE", inaće "FALSE". <br>
+Time dobivamo funkciju $p(x) = f(x^T \mathbf{\beta})$ koja daje vrijednosti između $\langle 0, 1 \rangle$. Budući da trebamo binarne vrijednosti "TRUE" i "FALSE" za $x_i$ koji daju $p>0.5$ označit ćemo s "TRUE", inaće "FALSE". <br>
 
 U dobivenim podacima imamo stupac zvan "Training_Sample", njime ćemo podijeliti podatke na skupove za "treniranje" i "testiranje". Nad skupom za treniranje će se provoditi maximum likelihood estimacija $\beta_i$, a nad skupom za testiranje ćemo provesti testiranje modela i njegovu efikasnost. <br>
 
@@ -625,7 +644,7 @@ print(accuracy)
 ```
 
 ```{r}
-osoba <- data.frame(Prior_Arrest_Episodes_PPViolationCharges ="0")
+osoba <- data.frame(Prior_Arrest_Episodes_PPViolationCharges ="5 or more")
 p<- predict(model, osoba,type="response" )
 p
 ```
@@ -636,7 +655,7 @@ Postavljamo hipoteze, neka je $\mu_i$ prosječna vrijednost prosjeka testova na 
 
 $H_0$: $\mu_1 = \mu_2 = \mu_3$ <br>
 
-$H_1$: barem dva $\mu$ nisu jednaka.
+$H_1$: barem dva $\mu_i$ nisu jednaka.
 
 Za ovakvo postavljene hipoteze nije prikladno koristiti t-test 3 puta zbog nakupljanja greške prve vrste. Stoga, metoda koju ćemo koristiti jest ANOVA (Analysis of Variance). <br>
 ANOVA se provodi uz pretpostavku normalnosti distribucije reziduala, da su varijance među grupama (stupanj obrazovanja) iste i da su podaci među grupama nezavisni. <br>
@@ -655,7 +674,7 @@ ggplot(data = recidivism_full, aes(x = Education_Level, y = drugs)) +
   ggtitle("Boxplots of 'drugs' by 'Education_Level'")
 
 ```
-Iz box-plota bismo mogli naslutiti da bi zatvorenici sa manjim stupnjom obrazovanja mogli konzumirati više droga. Pogledajmo srednje vrijednosti: <br>
+Iz box-plota bismo mogli naslutiti da bi zatvorenici sa manjim stupnjom obrazovanja mogli konzumirati više droga. <br>
 
 ```{r}
 ggplot(recidivism_full, aes(x = drugs, fill = Education_Level)) +
@@ -783,8 +802,7 @@ QQ-plotom vidimo da su podaci "većinom" normalni osim devijacija na desnom repu
 
 
 Što ako nemamo normalnu distribuciju reziduala i/ili varijance nisu jednake.
-
-Postoji naćin da testiramo iste hipoteze neovisno o distribuciji podataka. Takve metode zovemo neparametarskim i neparametarski ekvivalent jednofaktorskoj anovi je Kruskal-Wallisov test.
+Koristimo neparametarski test. Neparametarski ekvivalent jednofaktorskoj anovi je Kruskal-Wallisov test.
 hipoteze su:
 
 $H_0$: Medijani populacija su isti
