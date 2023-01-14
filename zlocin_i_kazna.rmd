@@ -819,3 +819,6 @@ Kruskal-Wallisovim testom opet odbacujemo nultu hipotezu.
 
 
 # Zaključak
+Pokazali smo da postoji veza između duljine zatvorske kazne s obzirom na razinu obrazovanja osuđenici da većim stupnjem obrazovanja su osuđeni na više godina.
+Mlađe osobe su podložnije ponavljanju kriminala. Postoje povezanosti između nekih droga i zločina, ali ne za svaku kombinaciju. Statistički smo zaključili da ne postoji povezanost između počinjenog zločina i konzumiranja metamfetamina.
+Mlađe osobe su također sklonije narkoticima. Dali smo par primjera predikcije recidivizma pomoću logističke regresije. Procijenili smo da vjerojatnost recidivizma veća za osuđenike s manjim stupnjem obrazovanja. I pokazali smo uz pomoć anove da konzumiranje narkotika među skupinama s različitim stupnjem obrazovanja nije jednako.
