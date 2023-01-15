@@ -526,7 +526,7 @@ Logistička regresija transformira model linearne regresije $x^T \beta$ sigmoida
 
 Time dobivamo funkciju $p(x) = f(x^T \mathbf{\beta})$ koja poprima vrijednosti između $\langle 0, 1 \rangle$. Budući da trebamo binarne vrijednosti "TRUE" i "FALSE" svaki $x_i$ koji daje $p>0.5$ označit ćemo s "TRUE", inače "FALSE". <br>
 
-Podatke čemo podijeliti na skupove za "treniranje" i "testiranje" prema vrijednosti u stupcu "Training_Sample". Nad skupom za treniranje se radi maximum likelihood estimacija $\beta_i$, a nad skupom za testiranje testiranje modela i testira se njegova efikasnost. <br>
+Podatke ćemo podijeliti na skupove za "treniranje" i "testiranje" prema vrijednosti u stupcu "Training_Sample". Nad skupom za treniranje se radi maximum likelihood estimacija $\beta_i$, a nad skupom za testiranje testiranje modela i testira se njegova efikasnost. <br>
 
 ```{r}
 train_sample <- subset(recidivism_full, Training_Sample==1)
