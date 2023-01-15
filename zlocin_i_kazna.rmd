@@ -4,12 +4,13 @@ author: Luka Mucko, Filip Pankretić, Matej Lopotar, Tomislav Žiger
 output: pdf_document
 ---
 ## Motivacija i opis problema
-Recidivizam je jedan od temeljnih pojmova u kaznenom pravosudu koji se odnosi na kriminalno ponašanje
+Recidivizam je jedan od temeljnih pojmova u kaznenom pravosuđu koji se odnosi na kriminalno ponašanje
 nakon što je osoba već kažnjena zbog prethodnog. Recidivizmom se smatra ponavljanje bilo kakvog kaznenog
 djela koje rezultira ponovnim uhićenjem ili ponovnom osudom tijekom razdoblja od tri godine nakon puštanja
 osobe na slobodu. Zbog opće sigurnosti, a i razvoja novih strategija za reintegraciju (bivših) osuđenika, bitno
 je proučiti i razumjeti koji čimbenici su učestaliji kod ponavljača zločina.
 <br>
+
 **Prvo ćemo odgovoriti na zadana pitanja, zatim ispitivati vlastite hipoteze.** <br>
 
 Učitajmo podatke:
@@ -29,7 +30,7 @@ library("AID")
 ```
 # Postoji li razlika u duljini zatvorske kazne s obzirom na razinu obrazovanja?
 
-U tablici podataka imamo stupce "prison_years" i "education_level" <br>
+U tablici podataka imamo stupce "prison_years" i "education_level". <br>
 "prison_years" poprima vrijednosti:
 ```{r}
 for (v in unique(recidivism_full$Prison_Years)){
@@ -46,7 +47,7 @@ for (v in unique(recidivism_full$Education_Level)){
 ```
 Vidimo da imamo 3 klase razine obrazovanja. <br><br>
 
-Uz poznavanje jedinstvenih vrijednosti "education_level" i "prison_years" možemo pronaći kontingencijsku tablicu:
+Uz poznavanje jedinstvenih vrijednosti "education_level" i "prison_years" možemo stvoriti kontingencijsku tablicu:
 ```{r}
 contingency_table<-table(recidivism_full$Education_Level, recidivism_full$Prison_Years)
 print(contingency_table)
@@ -59,7 +60,7 @@ Neka je $P_{ij} = \frac{A_{ij}}{\sum_{i=1}^{3} A_{ij}}$ <br>
 
 $H_0: p_{ij}=p_{ik} \  \forall i \in \{1,2,3\},\  \forall j,k \in \{1,2,3,4\}\  j \neq k$ <br>
 
-$H_1: p_{ij}\neq p_{ik}\  ...$ <br>
+$H_1: p_{ij}\neq p_{ik}  \  \forall i \in \{1,2,3\},\  \forall j,k \in \{1,2,3,4\}\  j \neq k$ <br>
 
 Možemo testirati hipotezu $H_0\  \text{odnosno} \ H_1$ koristeći $\chi ^2$ test o jednakosti proporcija.
 
@@ -87,10 +88,10 @@ Plava boja predstavlja pozitivnu asocijaciju između retka i stupca. Uočimo da 
 Vidimo da je vrijednost testne statistike 223.12 i p-vrijednost $< 2.2 \times 10^{-16}$ što je značajno
 manje od $p << \alpha = 0.05$. <br>
 
-Dakle zaključujemo da **postoji razlika u duljini zatvorske kazne s obzirom na razinu obrazovanja!!**
+Dakle statistički zaključujemo da **postoji razlika u duljini zatvorske kazne s obzirom na razinu obrazovanja!!**
 
 # Jesu li mlađe dobne skupine podložnije ponavljanju kriminala od starijih?
-označimo s $p_m$ i $p_s$ proporciju broja zatvorenika koji su ponovili kriminal i broja "starijih" odnosno "mlađih" zatvorenika.
+Označimo s $p_m$ i $p_s$ proporciju broja zatvorenika koji su ponovili kriminal i broja "starijih" odnosno "mlađih" zatvorenika.
 U tablici jedino imamo "age_at_release" koji predstavlja dob u kojoj su pušteni na slobodu.
 Po tome ćemo mjeriti starost.
 ```{r}
@@ -107,7 +108,6 @@ print(table)
 sprintf("Broj mladih je: %s",mladi)
 sprintf("Broj starih je: %s",stari)
 ```
-Za mjeru ponovljenog kriminala koristit ćemo Recidivizam. <br>
 
 Postoji 1 stupac u tablici koji nam govori je li je zatvorenik počinio zločin 3 godina nakon puštanja na slobodu i 3 stupca koja predstavljaju u kojoj od te 3 godine je ponovno počinio zločin. To su sve: Recidivism_Within_3years, Recidivism_Arrest_Year1, Recidivism_Arrest_Year2, Recidivism_Arrest_Year3. 0=no/1=yes<br>
 
@@ -168,7 +168,7 @@ recidivism_full$OtherUsage <- cut(recidivism_full$DrugTests_Other_Positive,
                                     labels=c("Rijetko","Često","Vrlo Često"))
 ```
 
-Sada možemo provesti ukupno 4*8= 32 testa. Koristimo simulate.p.value = TRUE što Monte Carlo simulacijom simulira p-vrijednost, to koristimo jer neke očekivane vrijednosti nisu veće od 5.<br>
+Sada možemo provesti ukupno 4*8= 32 testa. Koristimo simulate.p.value = TRUE što Monte Carlo simulacijom simulira p-vrijednost, to koristimo jer neke očekivane vrijednosti nisu veće od 5 pa test nije primjenjiv.<br>
 
 ```{r}
 narkotici<- c("MethUsage","CocaineUsage","THCUsage","OtherUsage")
@@ -225,13 +225,13 @@ chisq$observed
 corrplot(chisq$residuals, is.corr = FALSE)
 ```
 
-Plavo označava da više zatvorenika od očekivanog koji često konzumiraju THC osuđeno zbog misdemeanora (vandalizam, vožnje pod utjecajem alkohola, posjedovanje droge! i sl.). Tj. da postoji pozitivna povezanost između nasilja i konzumiranja THC-a. <br>
+Vidimo da više zatvorenika od očekivanog koji često konzumiraju THC osuđeno zbog misdemeanora (vandalizam, vožnje pod utjecajem alkohola, posjedovanje droge! i sl.).
 
 
-Ako ćemo gledati samo zloćine zbog kojih su osuđenici zatvoreni, tada koristimo stupac "Prison_Offense" koji poprima 5 vrijednosti: Violent/Sex, Violent/Non-Sex,
+Ako ćemo gledati samo zločine zbog kojih su osuđenici zatvoreni, tada koristimo stupac "Prison_Offense" koji poprima 5 vrijednosti: Violent/Sex, Violent/Non-Sex,
 Property, Drug, Other. <br>
 
-Time možemo provesti 4 testova.
+Time možemo provesti 4 testa.
 
 ```{r}
 cocaine<- table(recidivism_full$Prison_Offense, recidivism_full$CocaineUsage)
@@ -265,7 +265,7 @@ chisq.test(others, simulate.p.value = TRUE)
 
 Statistički zaključujemo da je broj počinjenog kriminala zbog kojeg su osuđenici zatvoreni neovisan o postotku pozitivnih testova na metamfetamine i na "ostale" droge.
 
-Pogledajmo reziduale za kokain i thc gdje odbacujemo nultu hipotezu i prihvaćamo alternativnu uz značaj 0.05.
+Pogledajmo reziduale za kokain i THC gdje odbacujemo nultu hipotezu i prihvaćamo alternativnu uz značaj 0.05.
 
 ```{r}
 corrplot(cocaine_test$residuals, is.corr=FALSE)
@@ -305,7 +305,7 @@ Vidimo da veći broj mlađih zatvorenika koristi drogu iako ih je manje od stari
 
 $H_0$: $p_{\text{mladi}} = p_{\text{stari}}$
 
-$H_1$: $p_{\text{mladi}} \neq p_{\text{stari}}$
+$H_1$: $p_{\text{mladi}} > p_{\text{stari}}$
 
 ```{r}
 Dm <- mladi_droge/mladi
@@ -335,15 +335,18 @@ Izdvojimo stare i mlade "drogeraše". Oni koji ne konzumiraju narkotike definira
 stari_drogerasi <- recidivism_full %>%
   select(DrugTests_THC_Positive, DrugTests_Meth_Positive, DrugTests_Cocaine_Positive,
          DrugTests_Other_Positive, Age_at_Release) %>%
-  filter((DrugTests_THC_Positive!=0 | DrugTests_Meth_Positive!=0 | DrugTests_Cocaine_Positive!=0
-          | DrugTests_Cocaine_Positive!=0) & Age_at_Release %in% c("33-37","38-42","43-47","48 or older")
+  filter((DrugTests_THC_Positive!=0 | DrugTests_Meth_Positive!=0
+          | DrugTests_Cocaine_Positive!=0
+          | DrugTests_Cocaine_Positive!=0)
+                 & Age_at_Release %in% c("33-37","38-42","43-47","48 or older")
   )%>% filter(rowSums(.[,1:4]) > 0) %>% na.omit()
 
 mladi_drogerasi <- recidivism_full %>%
   select(DrugTests_THC_Positive, DrugTests_Meth_Positive, DrugTests_Cocaine_Positive,
          DrugTests_Other_Positive, Age_at_Release) %>%
   filter((DrugTests_THC_Positive!=0 | DrugTests_Meth_Positive!=0 | DrugTests_Cocaine_Positive!=0
-          | DrugTests_Cocaine_Positive!=0) & Age_at_Release %in% c("18-22","23-27","28-32")
+          | DrugTests_Cocaine_Positive!=0)
+                 & Age_at_Release %in% c("18-22","23-27","28-32")
   ) %>% filter(rowSums(.[,1:4]) > 0) %>% na.omit()
 
 summary(stari_drogerasi)
@@ -388,9 +391,9 @@ ggplot() +
                  alpha = 0.5) +
   geom_histogram(data = stari_drogerasi_trans, aes(x = total_trans), fill = "red",
                  alpha = 0.5) +
-  ggtitle("Histogram of 'total' column in mladi_drogerasi_trans and stari_drogerasi_trans")
-+ xlab("Total") +
-  ylab("Count")
+  ggtitle("Histogram of 'total' column in mladi_drogerasi_trans and stari_drogerasi_trans") +
+        xlab("Total") +
+        ylab("Count")
 
 ```
 
@@ -447,7 +450,7 @@ F-test daje p-vrijednost $7.067 \times 10^{-7}$. I uz značaj $\alpha = 0.05$ da
 Uz izračunati omjer iz danih podataka $0.8564523$.
 Statistički zaključujemo uz značaj 0.05 da varijance nisu jednake. Varijanca starih je veća od varijance mladih. <br>
 
-Sada možemo provesti T-test uz nejednake varijance. Poznavanje varijanci nam određuje broj sloboda i testnu statistiku.
+Sada možemo provesti T-test uz nejednake varijance. Poznavanje varijanci nam određuje stupanj slobode i testnu statistiku.
 Budući da smo podatke transformirali logaritmom hipoteze će sada glasiti:
 
 $H_0$: srednje vrijednosti mladih i starih su iste.
@@ -477,10 +480,10 @@ geometrijska sredina starih:
 5^(-2.037292)
 ```
 
-Iako ne možemo uspoređivati aritmetičke sredine log-transformiranih podataka i originalnih, ali zbog izrazito male p-vrijednosti možemo reći da postoji razlika između aritmetičke sredine
+Iako ne možemo uspoređivati aritmetičke sredine log-transformiranih podataka i originalnih zbog izrazito male p-vrijednosti možemo reći da postoji razlika između aritmetičke sredine
 mladih i starih tj. odbacujemo nultu hipotezu i prihvaćamo alternativnu.
 
-Budući da je broj uzoraka izrazito velik, još jednom ćemo se uzdat u robusnost T-testa te ga provesti na netransformiranim podacima.
+Budući da je broj uzoraka izrazito velik, još jednom ćemo se uzdati u robusnost T-testa te ga provesti na netransformiranim podacima.
 
 Odredimo jesu li varijance jednake F-testom.
 ```{r}
@@ -493,13 +496,13 @@ t.test(mladi_drogerasi$total, stari_drogerasi$total, var.equal = TRUE)
 ```
 Ponovno odbacujemo nultu hipotezu o jednakosti srednjih vrijednosti i prihvaćamo alternativu.
 
-Provedimo još jednom t-test na netransformiranim podaci da vidimo tko ima veću srednju vrijednost. Pretpostavit ćemo da mladi imaju veći.
+Provedimo još jednom t-test na netransformiranim podacima da vidimo tko ima veću srednju vrijednost. Pretpostavit ćemo da veću srednju vrijednost imaju mladi.
 ```{r}
 t.test(mladi_drogerasi$total, stari_drogerasi$total, var.equal=TRUE, alternative = "greater")
 ```
 Vidimo da uz malu p-vrijednost prihvaćamo alternativu "greater" tj. razlika između srednje vrijednosti mladih i starih je veća od 0. Mladi osuđenici koji konzumiraju narkotike konzumiraju više.
 
-kada su distribucije populacija nepoznate ili kada zahtjevi nekog parametarskog testa nisu zadovoljeni koristimo neparametarske testove.
+Kada su distribucije populacija nepoznate ili kada zahtjevi nekog parametarskog testa nisu zadovoljeni koristimo neparametarske testove.
 Neparametarska alternativa t-testu je Mann-Whitney-Wilcoxonov test. Neparametarski testovi se koriste kada su distribucije populacija nepoznate ili kada zahtjevi parametarskog testa nisu zadovoljeni.
 
 Za MWW test formiramo hipoteze:
@@ -521,9 +524,9 @@ Pokušat ćemo regresijom naći model koji će dovoljno dobro procjeniti vrijedn
 
 Logistička regresija transformira model linearne regresije $x^T \beta$ sigmoidalnom funkcijom $f(x) = \frac{1}{1-e^{-x}}$. <br>
 
-Time dobivamo funkciju $p(x) = f(x^T \mathbf{\beta})$ koja daje vrijednosti između $\langle 0, 1 \rangle$. Budući da trebamo binarne vrijednosti "TRUE" i "FALSE" za $x_i$ koji daju $p>0.5$ označit ćemo s "TRUE", inaće "FALSE". <br>
+Time dobivamo funkciju $p(x) = f(x^T \mathbf{\beta})$ koja poprima vrijednosti između $\langle 0, 1 \rangle$. Budući da trebamo binarne vrijednosti "TRUE" i "FALSE" svaki $x_i$ koji daje $p>0.5$ označit ćemo s "TRUE", inače "FALSE". <br>
 
-U dobivenim podacima imamo stupac zvan "Training_Sample", njime ćemo podijeliti podatke na skupove za "treniranje" i "testiranje". Nad skupom za treniranje će se provoditi maximum likelihood estimacija $\beta_i$, a nad skupom za testiranje ćemo provesti testiranje modela i njegovu efikasnost. <br>
+Podatke čemo podijeliti na skupove za "treniranje" i "testiranje" prema vrijednosti u stupcu "Training_Sample". Nad skupom za treniranje se radi maximum likelihood estimacija $\beta_i$, a nad skupom za testiranje testiranje modela i testira se njegova efikasnost. <br>
 
 ```{r}
 train_sample <- subset(recidivism_full, Training_Sample==1)
@@ -539,7 +542,7 @@ summary(model)
 Model koji uzima "Gender", "Race" i "Education_level" kao argumente ima sve parametre osim "Race" značajne (vrijednost Pr(>|z|) je veća od 0.05).
 
 
-Pogledajmo koliko dobro model procjenjuje je li je došlo do recividizma za neku osobu opisanom samo s "Gender" i "Education_Level".
+Pogledajmo koliko dobro model procjenjuje je li je došlo do recividizma za neku osobu opisanu samo s "Gender" i "Education_Level".
 
 ```{r}
 model <- glm(Recidivism_Within_3years ~ Gender + Education_Level
@@ -559,7 +562,7 @@ osoba <- data.frame(Gender="M", Education_Level = "Less than HS diploma")
 p <- predict(model, osoba, type="response")
 p
 ```
-Muškarac koji nema završenu srednju školu, prema modelu logističke regresije, procjenjujemo vjerojatnost od ~62% da ponovno počini zločin.
+Prema modelu logističke regresije procjenjujemo da postoji vjerojatnost od ~62% da muškarci koji nemaju završenu srednju školu ponovno počine zločin.
 
 
 ```{r}
@@ -585,7 +588,8 @@ print(accuracy)
 ```{r}
 summary(model)
 ```
-Uočimo da "FailToReport" ne utječe značajno na predikciju i mogli smo ga izostavit.
+Uočimo da "FailToReport" ne utječe značajno na predikciju i mogli smo ga izostaviti.
+(Piše FailToReportTRUE jer glm() stvara k-1 "dummy" varijable za svaki kategorijski parametar s k vrijednosti. Tu x-evi poprimaju binarne vrijednosti (0 ili 1) jer npr. "5 or more" * 2.2034 nema smisla.)
 
 Pogledajmo još nekoliko modela logističke regresije:
 
@@ -598,7 +602,7 @@ predicted.classes <- ifelse(probabilities > 0.5, TRUE, FALSE)
 accuracy <- mean(predicted.classes == test_sample$Recidivism_Within_3years)
 print(accuracy)
 ```
-"Condition_MH_SA" (Mental health, Substance abuse) označava da je osoba puštena zbog mentalnog stanja ili puštena zbog korištenja narkotika. <br>
+"Condition_MH_SA" (Mental health, Substance abuse) označava da je osoba puštena zbog lošeg mentalnog stanja ili puštena zbog ovisnosti tj. na odvikavanje. <br>
 
 ```{r}
 model <- glm(Recidivism_Within_3years ~ Condition_MH_SA, data = train_sample, family="binomial")
@@ -608,8 +612,7 @@ p
 ```
 Procjenjujemo da zatvorenici koji su pušteni na Parole zbog ovisnosti ili mentalnog stanja imaju 62% šanse da ponove zločin. <br>
 
-Education_Level <br>
-Procijena vjerojatnosti recidivizma znajući samo Education_level:
+Procjena vjerojatnosti recidivizma znajući samo Education_level:
 ```{r}
 model <- glm(Recidivism_Within_3years ~ Education_Level
              , data = train_sample, family="binomial")
@@ -640,10 +643,10 @@ p <- predict(model, osoba, type="response")
 p
 ```
 
-Procjenjujemo da je vjerojatnost recidivizma za osobu koja nema završeni fakultet ~61% veća od vjerojatnosti za osobu koja ima neki završeni neki fakultet 45%. <br>
+Vjerojatnost recidivizma veća je za osobe koje nemaju završeni fakultet i iznosi ~61% dok je za osobe koje imaju završeni fakultet ta vjerojatnost manja i iznosi 45%.
 
 
-Iznenađujuče najtočniji model od isprobanih dobivamo koristeći "Prior_Arrest_Episodes_PPViolationCharges":
+Iznenađujuće najtočniji model od isprobanih dobivamo koristeći "Prior_Arrest_Episodes_PPViolationCharges":
 ```{r}
 model <- glm(Recidivism_Within_3years ~ Prior_Arrest_Episodes_PPViolationCharges
              , data = train_sample, family="binomial")
@@ -694,7 +697,7 @@ ggplot(recidivism_full, aes(x = drugs, fill = Education_Level)) +
   ylab("Count")
 ```
 
-Zbog toga što se većina osuđenika ne konzumira narkotike, izdvojit ćemo one koji koriste narkotike i nad njima ćemo provoditi testove.
+Zbog toga što većina osuđenika ne konzumira narkotike, izdvojit ćemo one koji koriste narkotike i nad njima ćemo provoditi testove.
 Sada postavljavmo pitanje: **Od onih zatvorenika koji konzumiraju narkotike, konzumiraju li istu količinu neovisno o stupnju obrazovanja?**
 Hipoteze ostaju iste
 ```{r}
@@ -744,7 +747,7 @@ ggplot(recidivism_full_filtered, aes(x = boxcox, fill = Education_Level)) +
   xlab("Drugs use") +
   ylab("Count")
 ```
-Distribucije izgledaju normalnije. Pogledajmo statističkim testom jesu li normalni. <br>
+Distribucije izgledaju normalnije. Pogledajmo statističkim testom jesu li distribucije normalne. <br>
 
 ```{r}
 shapiro.test(sample(recidivism_full_filtered$boxcox, size=5000))
@@ -762,7 +765,7 @@ Prije provedbe ANOVA-e moramo pokazati da su varijance jednake. <br>
 varijance <- aggregate(boxcox ~ Education_Level, data = recidivism_full_filtered, var)
 varijance
 ```
-Vidimo da su varijance otprilike iste. Približno jednake 1.<br>
+Vidimo da su varijance otprilike iste, a približan iznos im je 1.<br>
 
 Provedimo statistički test koji testira hipoteze:
 
@@ -784,7 +787,7 @@ summary(model)
 ```
 p-vrijednost ANOVA-e jest manja od $2 \times 10^{-16}$.
 
-**Stoga statistički zaključujemo uz značaj 0.05 da se među zatvorenicima koji konzumiraju narkotike prosječna vrijednost pozitivnih testova na droge nije jednaka za svaki stupanj obrazovanja**
+**Stoga statistički zaključujemo uz značaj 0.05 da među zatvorenicima koji konzumiraju narkotike prosječna vrijednost pozitivnih testova na droge nije jednaka za svaki stupanj obrazovanja**
 
 ANOVA zahtijeva normalnu distribucija reziduala.
 ```{r}
@@ -812,8 +815,8 @@ QQ-plotom vidimo da su podaci "većinom" normalni osim devijacija na desnom repu
 
 
 Što ako nemamo normalnu distribuciju reziduala i/ili varijance nisu jednake.
-Koristimo neparametarski test. Neparametarski ekvivalent jednofaktorskoj anovi je Kruskal-Wallisov test.
-hipoteze su:
+Koristimo neparametarski test. Neparametarski ekvivalent jednofaktorskoj ANOVA-i je Kruskal-Wallisov test.
+Hipoteze su:
 
 $H_0$: Medijani populacija su isti
 
@@ -829,6 +832,4 @@ Kruskal-Wallisovim testom opet odbacujemo nultu hipotezu.
 
 
 # Zaključak
-Pokazali smo da postoji veza između duljine zatvorske kazne s obzirom na razinu obrazovanja osuđenici da većim stupnjem obrazovanja su osuđeni na više godina.
-Mlađe osobe su podložnije ponavljanju kriminala. Postoje povezanosti između nekih droga i zločina, ali ne za svaku kombinaciju. Statistički smo zaključili da ne postoji povezanost između počinjenog zločina i konzumiranja metamfetamina.
-Mlađe osobe su također sklonije narkoticima. Dali smo par primjera predikcije recidivizma pomoću logističke regresije. Procijenili smo da vjerojatnost recidivizma veća za osuđenike s manjim stupnjem obrazovanja. I pokazali smo uz pomoć anove da konzumiranje narkotika među skupinama s različitim stupnjem obrazovanja nije jednako.
+Pokazali smo da postoji povezanost između duljine zatvorske kazne i stupnja obrazovanja. Ljudi s većim stupnjem obrazovanja osuđeni su na više godina zatvora. Povezanost između zlouporabe droga i vrste zločina postoji, ali za neke kombinacije kao što su THC i nasilje dok počinjeni zločin i konzumacija metamfetamina nisu povezani.  Mlađe osobe podložnije su ponavljanju kriminala i korištenju narkotika. Dali smo par primjera predikcije recidivizma pomoću logističke regresije te smo procijenili da je vjerojatnost recidivizma veća za osuđenike s manjim stupnjem obrazovanja. Koristeći ANOVA-u zaključili smo da konzumiranje narkotika ovisi o stupnju obrazovanja, tj. da konzumiranje narkotika u skupinama s različitim stupnjevima obrazovanja nije jednaka.
